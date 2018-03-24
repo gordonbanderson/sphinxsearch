@@ -9,6 +9,8 @@
 namespace Suilven\SphinxSearch\Service;
 
 
+use SilverStripe\Core\Config\Config;
+
 class Client
 {
     /**
@@ -18,8 +20,8 @@ class Client
      */
     public function getConnection()
     {
-        $host = $this->config()->get('host');
-        $port = $this->config()->get('port');
+        $host = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'host');
+        $port = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
         $conn = new \Foolz\SphinxQL\Drivers\Pdo\Connection();
         $conn->setParams(array('host' => $host, 'port' => $port));
         return $conn;
