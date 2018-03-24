@@ -1,0 +1,14 @@
+---
+Name: sphinx
+---
+
+#Following config enabled markers to be written to a queue directory, in order that inotify can be used
+Suilven\SphinxSearch\Service\Client:
+  host: '127.0.0.1'
+  port: 9306
+
+  #This must be writable
+  config_dir: '/usr/local/sphinx/etc/conf.d/'
+
+  #The command to reindex, if empty use inotify to trigger instead
+  cmd_reindex: ''
