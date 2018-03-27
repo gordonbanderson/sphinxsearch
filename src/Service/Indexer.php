@@ -12,6 +12,7 @@ namespace Suilven\SphinxSearch\Service;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\View\ArrayData;
 use Suilven\FreeTextSearch\Index;
 use Suilven\FreeTextSearch\Indexes;
@@ -56,7 +57,46 @@ class Indexer
             }
 
             /** @var DataList $query */
-            $queryObject = singleton($className)::get()->setQueriedColumns(['Title', 'Content']);
+            $singleton = singleton($className);
+            $tableName = $singleton->config()->get('table_name');
+            $schema = $singleton->getSchema();
+
+            $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
+
+            error_log(print_r($specs, 1));
+
+            /*
+             * Array
+(
+    [ID] => PrimaryKey
+    [ClassName] => DBClassName
+    [LastEdited] => DBDatetime
+    [Created] => DBDatetime
+    [URLSegment] => Varchar(255)
+    [Title] => Varchar(255)
+    [MenuTitle] => Varchar(100)
+    [Content] => HTMLText
+    [MetaDescription] => Text
+    [ExtraMeta] => HTMLFragment(['whitelist' => ['meta', 'link']])
+    [ShowInMenus] => Boolean
+    [ShowInSearch] => Boolean
+    [Sort] => Int
+    [HasBrokenFile] => Boolean
+    [HasBrokenLink] => Boolean
+    [ReportClass] => Varchar
+    [Version] => Int
+    [CanViewType] => Enum('Anyone, LoggedInUsers, OnlyTheseUsers, Inherit', 'Inherit')
+    [CanEditType] => Enum('LoggedInUsers, OnlyTheseUsers, Inherit', 'Inherit')
+    [ProvideComments] => Boolean
+    [ModerationRequired] => Enum('None,Required,NonMembersOnly','None')
+    [CommentsRequireLogin] => Boolean
+    [Priority] => Varchar(5)
+    [ParentID] => ForeignKey
+)
+
+             */
+
+            $queryObject = $singleton::get()->setQueriedColumns(['Title', 'Content']);
 
             // this needs massages for sphinx
             $sql = $queryObject->sql();
@@ -66,8 +106,24 @@ class Indexer
             $sql = str_replace('`SiteTree`.`ID`,', '', $sql);
             $sql = str_replace('SELECT DISTINCT', 'SELECT DISTINCT `SiteTree`.`ID`, ', $sql);
 
+            error_log('T1: ' . $sql);
+
             $sqlArray = explode(PHP_EOL, $sql);
             $sql = implode(' \\' . "\n", $sqlArray);
+            error_log('T2: ' . $sql);
+
+            // now more fucking around with the query
+            $dateTimeFields = ['Created', 'LastEdited'];
+            foreach($dateTimeFields as $dtf)
+            {
+                error_log('CN:' . $tableName);
+                $sql = str_replace("`$tableName`.`$dtf`", "UNIXTIMESTAMP(`$tableName`.`$dtf`)" , $sql);
+            }
+
+            error_log('T3: ' . $sql);
+
+            die;
+
 
             $params = new ArrayData([
                'IndexName' => $name,
