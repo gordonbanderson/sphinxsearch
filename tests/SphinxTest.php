@@ -67,6 +67,8 @@ class SphinxTest extends SapphireTest
 
         }
 
+        // @todo show in search needs taken account of ShowInSearch
+
         /*
          * SELECT *, IN(brand_id,1,2,3,4) AS b FROM facetdemo WHERE MATCH('Product') AND b=1 LIMIT 0,10
 FACET brand_name, brand_id BY brand_id ORDER BY brand_id ASC
