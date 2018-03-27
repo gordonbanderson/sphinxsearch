@@ -11,6 +11,7 @@ namespace Suilven\SphinxSearch\Service;
 
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\View\ArrayData;
@@ -49,6 +50,9 @@ class Indexer
             $className = $index->getClazz();
             $name = $index->getName();
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
+
+            // these are stored in the db but not part of free text search, a bit like tokens I guess
+            $attributes = new ArrayList();
 
             // @todo different field types
             foreach($index->getFields() as $field)
@@ -112,17 +116,49 @@ class Indexer
             $sql = implode(' \\' . "\n", $sqlArray);
             error_log('T2: ' . $sql);
 
-            // now more fucking around with the query
-            $dateTimeFields = ['Created', 'LastEdited'];
-            foreach($dateTimeFields as $dtf)
+            // loop through fields adding attribute or altering sql as needbe
+            // @todo fix the 0 reference
+            $allFields = $fields[0];
+            $allFields[] = 'LastEdited';
+            $allFields[] = 'Created';
+
+            // make modifications to query and or attributes but only if required
+            foreach($allFields as $field)
             {
-                error_log('CN:' . $tableName);
-                $sql = str_replace("`$tableName`.`$dtf`", "UNIXTIMESTAMP(`$tableName`.`$dtf`)" , $sql);
+                error_log('FIELD:' . print_r($field,1));
+
+                if (isset($specs[$field])) {
+                    $fieldType = $specs[$field];
+                    switch($fieldType) {
+                        case 'DBDatetime':
+                            $sql = str_replace("`$tableName`.`$field`", "UNIXTIMESTAMP(`$tableName`.`$field`)" , $sql);
+                            $attributes[$field] = 'sql_attr_timestamp';
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
+                            break;
+                        case 'Boolean':
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_unit']); // @todo informed guess
+                            break;
+                        case 'ForeignKey':
+                            $attributes[$field] = 'sql_attr_uint';
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                            break;
+                        default:
+                            // do nothing
+                            break;
+                    }
+                } else {
+                    user_error("The field {$field} does not exist for class {$className}");
+                }
             }
 
-            error_log('T3: ' . $sql);
+            /**
+             * to add
+             * 	sql_attr_string		= classname
+             */
 
-            die;
+
+
+            error_log('T3: ' . $sql);
 
 
             $params = new ArrayData([
@@ -132,7 +168,7 @@ class Indexer
                 'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
                 'DB_PASSWD' => Environment::getEnv('SS_DATABASE_PASSWORD'),
                 'DB_NAME' => Environment::getEnv('SS_DATABASE_NAME'),
-
+                'Attributes' => $attributes,
             ]);
 
             $configuraton = $params->renderWith('IndexClassConfig');
