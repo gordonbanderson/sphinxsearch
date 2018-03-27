@@ -16,6 +16,9 @@ source {$IndexName}_source
 	sql_query		= $SQL
 
 	sql_attr_uint		= id
+
+    #@todo Fix, getting weird error I can't figure out this late at night
+    <% loop $Attributes %> <% end_loop %>
 \}
 
 
@@ -55,13 +58,15 @@ index {$IndexName}_index
 	# See http://sphinxsearch.com/docs/current/conf-morphology.html for alternative languages
 	morphology		= stem_en
 
-
+    html_strip = 1
 }
 
 # realtime index example
 #
 # you can run INSERT, REPLACE, and DELETE on this index on the fly
 # using MySQL protocol (see 'listen' directive below)
+
+#@todo Update this appropriately
 
 index {$IndexName}_rt
 {
