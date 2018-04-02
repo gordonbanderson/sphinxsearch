@@ -100,15 +100,25 @@ class Indexer
 
              */
 
-            $queryObject = $singleton::get()->setQueriedColumns(['Title', 'Content']);
+            error_log('FIELDS: ' . print_r($fields, 1));
+
+            // @todo fix reference here
+            $queryObject = $singleton::get()->setQueriedColumns($fields[0]);
+
 
             // this needs massages for sphinx
             $sql = $queryObject->sql();
+
+            error_log('T0: sql=' . $sql);
+
             $sql = str_replace('"', '`', $sql);
 
             // need to move ID to first param
-            $sql = str_replace('`SiteTree`.`ID`,', '', $sql);
-            $sql = str_replace('SELECT DISTINCT', 'SELECT DISTINCT `SiteTree`.`ID`, ', $sql);
+            $sql = str_replace("`$tableName`.`ID`, ", '', $sql);
+            $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
+
+            // @todo class filter, this will probably need fixed
+            $sql = str_replace('WHERE (`SiteTree`.`ClassName` IN (?))', "WHERE (`SiteTree`.`ClassName` IN ('{$className}'))", $sql);
 
             error_log('T1: ' . $sql);
 
@@ -131,15 +141,19 @@ class Indexer
                     $fieldType = $specs[$field];
                     switch($fieldType) {
                         case 'DBDatetime':
-                            $sql = str_replace("`$tableName`.`$field`", "UNIXTIMESTAMP(`$tableName`.`$field`)" , $sql);
-                            $attributes[$field] = 'sql_attr_timestamp';
+                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
+                            // $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
+                            break;
+                        case 'Datetime':
+                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
+                            // this breaks order by if field is after: $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
                             break;
                         case 'Boolean':
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_unit']); // @todo informed guess
                             break;
                         case 'ForeignKey':
-                            $attributes[$field] = 'sql_attr_uint';
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
                             break;
                         default:
