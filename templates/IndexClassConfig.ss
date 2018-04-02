@@ -15,10 +15,12 @@ source {$IndexName}_source
 
 	sql_query		= $SQL
 
-	sql_attr_uint		= id
+    #First argument is always the ID for Sphinx
+	#sql_attr_uint		= ID
 
-    #@todo Fix, getting weird error I can't figure out this late at night
-    <% loop $Attributes %> <% end_loop %>
+    #@todo These need aliased
+    <% loop $Attributes %>$Type = $Name
+    <% end_loop %>
 \}
 
 
