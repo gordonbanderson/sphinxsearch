@@ -13,7 +13,9 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
+use SilverStripe\ORM\DataQuery;
 use SilverStripe\View\ArrayData;
 use Suilven\FreeTextSearch\Index;
 use Suilven\FreeTextSearch\Indexes;
@@ -102,8 +104,15 @@ class Indexer
 
             error_log('FIELDS: ' . print_r($fields, 1));
 
+            // need to override sort, set it to null
+            Config::modify()->set($className, 'default_sort', null);
+
             // @todo fix reference here
+            /** @var DataObject $queryObject */
             $queryObject = $singleton::get()->setQueriedColumns($fields[0]);
+
+
+            //$queryObject->setOrderBy(null);
 
 
             // this needs massages for sphinx
