@@ -26,6 +26,8 @@ class Searcher
 
     private $page = 1;
 
+    private $index = 'sitetree';
+
     /**
      * @param int $pageSize
      */
@@ -60,9 +62,7 @@ class Searcher
         $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();
         $query = SphinxQL::create($connection)->select('id')
-
-            // @todo hardwired
-            ->from('sitetree_index', 'sitetree_rt')
+            ->from($this->index .'_index', $this->index  . '_rt')
             ->match('title', $q); // @todo try ? for wildcard
 
         $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
