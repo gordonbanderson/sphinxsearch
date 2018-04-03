@@ -26,7 +26,6 @@ class SphinxTest extends SapphireTest
 
     public function testSearch()
     {
-        error_log('Test search');
         // create a SphinxQL Connection object to use with SphinxQL
         $conn = new \Foolz\SphinxQL\Drivers\Pdo\Connection();
         $conn->setParams(array('host' => 'sphinx', 'port' => 9306));
@@ -44,7 +43,6 @@ class SphinxTest extends SapphireTest
 
         $result = $query->execute();
 
-        error_log('RESULTS: ' . $result->count());
         foreach($result->fetchAllAssoc() as $assoc) {
             error_log(print_r($assoc, 1));
             $comment = DataObject::get_by_id('SilverStripe\Comments\Model\Comment', $assoc['id']);
@@ -63,7 +61,6 @@ class SphinxTest extends SapphireTest
                     'html_strip_mode' => 'strip',
                 ]
             )->execute()->getStored();
-            error_log(print_r($snippets, 1));
 
         }
 
