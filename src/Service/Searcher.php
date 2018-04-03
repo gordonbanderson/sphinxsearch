@@ -21,6 +21,26 @@ class Searcher
 
     private $client;
 
+    private $pageSize = 10;
+
+    private $page = 1;
+
+    /**
+     * @param int $pageSize
+     */
+    public function setPageSize($pageSize)
+    {
+        $this->pageSize = $pageSize;
+    }
+
+    /**
+     * @param int $page
+     */
+    public function setPage($page)
+    {
+        $this->page = $page;
+    }
+
     public function __construct()
     {
         $this->client = new Client();
@@ -33,6 +53,7 @@ class Searcher
 
     public function search($q)
     {
+        $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();
         $query = SphinxQL::create($connection)->select('id')
 
@@ -40,7 +61,20 @@ class Searcher
             ->from('sitetree_index', 'sitetree_rt')
             ->match('title', $q); // @todo try ? for wildcard
 
+        $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
         $result = $query->execute();
+
+        $metaQuery = SphinxQL::create($connection)->query('SHOW META;');
+        $metaData = $metaQuery->execute();
+
+        error_log('---- META QUERY ----');
+
+        $searchInfo = [];
+        foreach($metaData->getStored() as $info) {
+            $varname = $info['Variable_name'];
+            $value = $info['Value'];
+            $searchInfo[$varname] = $value;
+        }
 
         $formattedResults = new ArrayList();
 
@@ -75,8 +109,15 @@ class Searcher
             $formattedResults->push($formattedResult);
         }
 
-        return new ArrayData([
-            'Records' => $formattedResults
-        ]);
+        $elapsed = round(microtime(true) * 1000) - $startMs;
+
+        return [
+            'Records' => $formattedResults,
+            'PageSize' => $this->pageSize,
+            'Page' => $this->page,
+            'TotalPages' => 1+round($searchInfo['total_found'] / $this->pageSize),
+            'ResultsFound' => $searchInfo['total_found'],
+            'Time' => $elapsed/1000.0
+        ];
     }
 }

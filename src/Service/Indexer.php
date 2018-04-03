@@ -69,8 +69,6 @@ class Indexer
 
             $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
 
-            error_log(print_r($specs, 1));
-
             /*
              * Array
 (
@@ -102,7 +100,6 @@ class Indexer
 
              */
 
-            error_log('FIELDS: ' . print_r($fields, 1));
 
             // need to override sort, set it to null
             Config::modify()->set($className, 'default_sort', null);
@@ -111,14 +108,8 @@ class Indexer
             /** @var DataObject $queryObject */
             $queryObject = $singleton::get()->setQueriedColumns($fields[0]);
 
-
-            //$queryObject->setOrderBy(null);
-
-
             // this needs massages for sphinx
             $sql = $queryObject->sql();
-
-            error_log('T0: sql=' . $sql);
 
             $sql = str_replace('"', '`', $sql);
 
@@ -129,11 +120,8 @@ class Indexer
             // @todo class filter, this will probably need fixed
             $sql = str_replace('WHERE (`SiteTree`.`ClassName` IN (?))', "WHERE (`SiteTree`.`ClassName` IN ('{$className}'))", $sql);
 
-            error_log('T1: ' . $sql);
-
             $sqlArray = explode(PHP_EOL, $sql);
             $sql = implode(' \\' . "\n", $sqlArray);
-            error_log('T2: ' . $sql);
 
             // loop through fields adding attribute or altering sql as needbe
             // @todo fix the 0 reference
@@ -144,8 +132,6 @@ class Indexer
             // make modifications to query and or attributes but only if required
             foreach($allFields as $field)
             {
-                error_log('FIELD:' . print_r($field,1));
-
                 if (isset($specs[$field])) {
                     $fieldType = $specs[$field];
                     switch($fieldType) {
@@ -180,10 +166,6 @@ class Indexer
              */
 
 
-
-            error_log('T3: ' . $sql);
-
-
             $params = new ArrayData([
                'IndexName' => $name,
                'SQL' => 'SQL_QUERY_HERE',
@@ -210,12 +192,9 @@ class Indexer
     {
         $sphinxConfigurations = $this->generateConfig();
         $sphinxSavePath = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'config_dir');
-        error_log('Sphinx path: ' . $sphinxSavePath);
 
-        error_log('==== saving config ====');
         foreach(array_keys($sphinxConfigurations) as $filename) {
             $saveTo = $sphinxSavePath . '/' .$filename . '.conf';
-            error_log('CONFIG: ' . $sphinxConfigurations[$filename]);
             file_put_contents($saveTo,$sphinxConfigurations[$filename]);
         }
     }
