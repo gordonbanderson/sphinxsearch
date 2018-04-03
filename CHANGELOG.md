@@ -1,5 +1,21 @@
 # Change Log
 
+## [Unreleased](https://github.com/gordonbanderson/sphinxsearch/tree/HEAD)
+
+[Full Changelog](https://github.com/gordonbanderson/sphinxsearch/compare/0.0.4...HEAD)
+
+**Implemented enhancements:**
+
+- Implement Front End Searching [\#2](https://github.com/gordonbanderson/sphinxsearch/issues/2)
+
+**Closed issues:**
+
+- Pagination for Search Results [\#5](https://github.com/gordonbanderson/sphinxsearch/issues/5)
+- Use Index Name for Sphinx, Not Classname [\#4](https://github.com/gordonbanderson/sphinxsearch/issues/4)
+
+## [0.0.4](https://github.com/gordonbanderson/sphinxsearch/tree/0.0.4) (2018-04-03)
+[Full Changelog](https://github.com/gordonbanderson/sphinxsearch/compare/0.0.3...0.0.4)
+
 ## [0.0.3](https://github.com/gordonbanderson/sphinxsearch/tree/0.0.3) (2018-04-03)
 [Full Changelog](https://github.com/gordonbanderson/sphinxsearch/compare/0.0.2...0.0.3)
 
