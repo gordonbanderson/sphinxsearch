@@ -37,12 +37,10 @@ class Searcher
         $query = SphinxQL::create($connection)->select('id')
 
             // @todo hardwired
-            ->from('SiteTree_index', 'SiteTree_rt')
+            ->from('sitetree_index', 'sitetree_rt')
             ->match('title', $q); // @todo try ? for wildcard
 
         $result = $query->execute();
-
-        error_log('RESULTS: ' . $result->count());
 
         $formattedResults = new ArrayList();
 
@@ -56,7 +54,7 @@ class Searcher
                 // @todo get from index, need all text fields
                 $dataobject->Title . ' ' . $dataobject->Content,
                 //@todo hardwired
-                'SiteTree_index',
+                'sitetree_index',
                 $q,
                 [
                     'around' => 10,
@@ -70,15 +68,11 @@ class Searcher
 
             $dataobject->Snippets = $snippets[0]['snippet'];
 
-            echo print_r($snippets[0],1);
-
             $formattedResult = new ArrayData([
                 'Record' => $dataobject
             ]);
 
             $formattedResults->push($formattedResult);
-
-            error_log(print_r($snippets, 1));
         }
 
         return new ArrayData([
