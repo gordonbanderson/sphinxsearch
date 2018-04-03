@@ -183,7 +183,7 @@ class Indexer
             $configuration2 = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
 
             // @todo generic naming
-            $allConfigs[$className] = "{$configuration2}";
+            $allConfigs[$name] = "{$configuration2}";
         }
         return $allConfigs;
     }
