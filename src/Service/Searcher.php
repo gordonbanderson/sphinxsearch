@@ -13,6 +13,7 @@ use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\PaginatedList;
 use SilverStripe\View\ArrayData;
 
 class Searcher
@@ -53,6 +54,9 @@ class Searcher
 
     public function search($q)
     {
+        error_log('SIZE: ' . $this->pageSize);
+        error_log('PAGE: ' . $this->page);
+
         $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();
         $query = SphinxQL::create($connection)->select('id')
@@ -111,13 +115,21 @@ class Searcher
 
         $elapsed = round(microtime(true) * 1000) - $startMs;
 
+        $pagination = new PaginatedList($formattedResults);
+        $pagination->setCurrentPage($this->page);
+        $pagination->setPageLength($this->pageSize);
+        $pagination->setTotalItems($searchInfo['total_found']);
+
+
+
         return [
             'Records' => $formattedResults,
             'PageSize' => $this->pageSize,
             'Page' => $this->page,
             'TotalPages' => 1+round($searchInfo['total_found'] / $this->pageSize),
             'ResultsFound' => $searchInfo['total_found'],
-            'Time' => $elapsed/1000.0
+            'Time' => $elapsed/1000.0,
+            'Pagination' => $pagination
         ];
     }
 }
