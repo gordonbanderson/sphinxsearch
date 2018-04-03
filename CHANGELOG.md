@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.0.3](https://github.com/gordonbanderson/sphinxsearch/tree/0.0.3) (2018-04-03)
+[Full Changelog](https://github.com/gordonbanderson/sphinxsearch/compare/0.0.2...0.0.3)
+
+**Closed issues:**
+
+- Remove Debug [\#3](https://github.com/gordonbanderson/sphinxsearch/issues/3)
+
+## [0.0.2](https://github.com/gordonbanderson/sphinxsearch/tree/0.0.2) (2018-04-03)
+[Full Changelog](https://github.com/gordonbanderson/sphinxsearch/compare/0.0.1...0.0.2)
+
 ## [0.0.1](https://github.com/gordonbanderson/sphinxsearch/tree/0.0.1) (2018-03-24)
 
 
