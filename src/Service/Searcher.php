@@ -9,6 +9,7 @@
 namespace Suilven\SphinxSearch\Service;
 
 
+use Foolz\SphinxQL\Drivers\Pdo\ResultSet;
 use Foolz\SphinxQL\Facet;
 use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
@@ -68,26 +69,61 @@ class Searcher
         $connection = $this->client->getConnection();
 
         // @todo make fields configurable?
-        $query = SphinxQL::create($connection)->select('id')
-            ->from($this->index .'_index', $this->index  . '_rt')
-            ->match('?', $q); // @todo try ? for wildcard
+        $result = SphinxQL::create($connection)->select('id')
+            ->from([$this->index .'_index', $this->index  . '_rt'])
+            ->match('?', $q)
+            ->facet(Facet::create($connection)
+                ->facet(array('shutterspeed'))
+                ->orderBy('shutterspeed', 'ASC'))
+            ->executeBatch()
+            ->getStored();
 
-        $facet = Facet::create($connection);
-        $facet->facet('iso', 'aperture');
-        $facet->limit(0, 10000000);
+        echo "\n\n\n\n";
+
+        echo print_r($result, 1);
+        die;
+        ; // @todo try ? for wildcard
+
+
+        // facets cause a break on show meta
+       //  $facet = Facet::create($connection);
+       // $facet->facet('iso');
+     //   $query->facet($facet);
+
+
+/*
+        $result = SphinxQL::create(self::$conn)
+            ->select()
+            ->from('rt')
+            ->facet(Facet::create($conn)
+                ->facet(array('gid'))
+                ->orderBy('gid', 'ASC'))
+            ->executeBatch()
+            ->getStored();
+*/
+
+
 
         //SELECT * FROM flickr_index LIMIT 0,10 FACET lastedited;
 
-        $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
-        $result = $query->execute();
+      //  $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
 
+        /** @var ResultSet $result */
+
+
+        $ids = $result->fetchAllAssoc();
+        $result->freeResult();
+
+        echo "\n\n\n\n";
 
         echo print_r($result, 1);
 
         $metaQuery = SphinxQL::create($connection)->query('SHOW META;');
         $metaData = $metaQuery->execute();
 
-        error_log('---- META QUERY ----');
+        error_log('---- META DATA ----');
+        echo '****************** >>>>>' . print_r($metaData, 1);
+
 
         $searchInfo = [];
         foreach($metaData->getStored() as $info) {
@@ -98,7 +134,7 @@ class Searcher
 
         $formattedResults = new ArrayList();
 
-        foreach($result->fetchAllAssoc() as $assoc) {
+        foreach($ids as $assoc) {
             // @todo use array merge to minimize db queries
             // @todo need to get this from the index definition
 

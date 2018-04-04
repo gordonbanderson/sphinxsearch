@@ -60,6 +60,8 @@ class Indexer
 
             error_log('>>>> CLASSNAME: ' . $className);
 
+            error_log('INDEX: ' . print_r($index, 1));
+
             $name = $index->getName();
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
 
@@ -75,6 +77,15 @@ class Indexer
                 $fields[] = $field;
             }
 
+            foreach($index->getTokens() as $token)
+            {
+                $fields[] = $token;
+            }
+
+            $tokens = $index->getTokens();
+
+            error_log('FIELDS AND TOKENS: ' . print_r($fields, 1));
+
             /** @var DataList $query */
             $singleton = singleton($className);
             $tableName = $singleton->config()->get('table_name');
@@ -89,11 +100,17 @@ class Indexer
             // @todo fix reference here
             /** @var DataObject $queryObject */
 
+            /** @var $DataList $queryObject */
             $queryObject = Versioned::get_by_stage($className, Versioned::LIVE);
 
 
-            error_log('QUERIED COLS FOR ' . $className . ': ' . print_r($fields[0], 1));
-            $queryObject->setQueriedColumns($fields[0]);
+            error_log('CLASS:' . get_class($queryObject));
+
+
+            error_log('QUERIED COLS FOR ' . $className . ': ' . print_r($fields, 1));
+
+            // this is how to do it with a DataList, it clones and returns a new DataList
+            $queryObject = $queryObject->setQueriedColumns($fields);
 
 
             // this needs massages for sphinx
@@ -161,8 +178,7 @@ class Indexer
             $sql = implode(' \\' . "\n", $sqlArray);
 
             // loop through fields adding attribute or altering sql as needbe
-            // @todo fix the 0 reference
-            $allFields = $fields[0];
+            $allFields = $fields;
             $allFields[] = 'LastEdited';
             $allFields[] = 'Created';
 
@@ -171,6 +187,7 @@ class Indexer
             {
                 if (isset($specs[$field])) {
                     $fieldType = $specs[$field];
+                    error_log('FT:' . $field . ' --> ' . $fieldType);
                     switch($fieldType) {
                         case 'DBDatetime':
                             $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
@@ -183,7 +200,7 @@ class Indexer
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
                             break;
                         case 'Boolean':
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_unit']); // @todo informed guess
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_bool']); // @todo informed guess
                             break;
                         case 'ForeignKey':
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
@@ -192,9 +209,42 @@ class Indexer
                             // do nothing
                             break;
                     }
+
+                    // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
+                    if (in_array($field, $tokens)) {
+                        $fieldType = $specs[$field];
+
+                        // remove string length from varchar
+                        if (substr( $fieldType, 0, 7 ) === "Varchar") {
+                            $fieldTYpe = 'Varchar';
+                        }
+
+                        // @todo - float
+                        // NOTE, cannot filter on string attributes, see http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
+                        // OH, it seems to work :)
+                        switch($fieldType) {
+                            case 'Int':
+                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                                break;
+                            case 'Varchar':
+                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_string']);
+                                break;
+                            case 'HTMLText':
+                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                                break;
+                            case 'Float':
+                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_float']);
+                                break;
+                            default:
+                                // do nothing
+                                break;
+                        }
+                    }
                 } else {
                     user_error("The field {$field} does not exist for class {$className}");
                 }
+
+                //
             }
 
             /**
