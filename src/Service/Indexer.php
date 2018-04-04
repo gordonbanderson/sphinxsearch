@@ -9,6 +9,7 @@
 namespace Suilven\SphinxSearch\Service;
 
 
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\ORM\ArrayList;
@@ -16,6 +17,7 @@ use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\DataQuery;
+use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
 use Suilven\FreeTextSearch\Index;
 use Suilven\FreeTextSearch\Indexes;
@@ -45,13 +47,24 @@ class Indexer
      */
     public function generateConfig()
     {
+
+
         $allConfigs = [];
+
+
         /** @var Index $index */
         foreach($this->indexes as $index)
         {
-            $className = $index->getClazz();
+            $className = $index->getClass();
+            error_log("\n\n\n\n\n");
+
+            error_log('>>>> CLASSNAME: ' . $className);
+
             $name = $index->getName();
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
+
+
+
 
             // these are stored in the db but not part of free text search, a bit like tokens I guess
             $attributes = new ArrayList();
@@ -69,56 +82,80 @@ class Indexer
 
             $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
 
-            /*
-             * Array
-(
-    [ID] => PrimaryKey
-    [ClassName] => DBClassName
-    [LastEdited] => DBDatetime
-    [Created] => DBDatetime
-    [URLSegment] => Varchar(255)
-    [Title] => Varchar(255)
-    [MenuTitle] => Varchar(100)
-    [Content] => HTMLText
-    [MetaDescription] => Text
-    [ExtraMeta] => HTMLFragment(['whitelist' => ['meta', 'link']])
-    [ShowInMenus] => Boolean
-    [ShowInSearch] => Boolean
-    [Sort] => Int
-    [HasBrokenFile] => Boolean
-    [HasBrokenLink] => Boolean
-    [ReportClass] => Varchar
-    [Version] => Int
-    [CanViewType] => Enum('Anyone, LoggedInUsers, OnlyTheseUsers, Inherit', 'Inherit')
-    [CanEditType] => Enum('LoggedInUsers, OnlyTheseUsers, Inherit', 'Inherit')
-    [ProvideComments] => Boolean
-    [ModerationRequired] => Enum('None,Required,NonMembersOnly','None')
-    [CommentsRequireLogin] => Boolean
-    [Priority] => Varchar(5)
-    [ParentID] => ForeignKey
-)
-
-             */
-
 
             // need to override sort, set it to null
             Config::modify()->set($className, 'default_sort', null);
 
             // @todo fix reference here
             /** @var DataObject $queryObject */
-            $queryObject = $singleton::get()->setQueriedColumns($fields[0]);
+
+            $queryObject = Versioned::get_by_stage($className, Versioned::LIVE);
+
+
+            error_log('QUERIED COLS FOR ' . $className . ': ' . print_r($fields[0], 1));
+            $queryObject->setQueriedColumns($fields[0]);
+
 
             // this needs massages for sphinx
             $sql = $queryObject->sql();
 
+            error_log('SQL INIT: ' . $sql);
+
+
+            $classNameInHierarchy = $className;
+
+
+            $joinClasses = [];
+
+            // need to know for the stage, dataobjects assumed flat
+            $isSiteTree = false;
+            while($classNameInHierarchy != 'SilverStripe\ORM\DataObject')
+            {
+                if ($classNameInHierarchy != 'SilverStripe\CMS\Model\SiteTree') {
+                    $joinClasses[] = '\'' .  str_replace('\\', '\\\\', $classNameInHierarchy) . '\'';
+                } else {
+                    $isSiteTree = true;
+                }
+
+                error_log('CN:' . $classNameInHierarchy);
+                $instance = new $classNameInHierarchy;
+                $classNameInHierarchy = get_parent_class($classNameInHierarchy);
+            }
+
+            error_log('JOIN CLASSES: ' . print_r($joinClasses, 1));
+
+
+            // error_log('SQL T1 ' . $sql);
+
             $sql = str_replace('"', '`', $sql);
 
             // need to move ID to first param
-            $sql = str_replace("`$tableName`.`ID`, ", '', $sql);
-            $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
+            if ($isSiteTree) {
+                $sql = str_replace("`{$tableName}_Live`.`ID`, ", '', $sql);
+                $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}_Live`.`ID`, ", $sql);
+            } else {
+                $sql = str_replace("`{$tableName}`.`ID`, ", '', $sql);
+                $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
+            }
 
-            // @todo class filter, this will probably need fixed
-            $sql = str_replace('WHERE (`SiteTree`.`ClassName` IN (?))', "WHERE (`SiteTree`.`ClassName` IN ('{$className}'))", $sql);
+
+            $commas = str_repeat('?, ', sizeof($joinClasses));
+            $commas = substr( $commas, 0, -2 );
+            $columns = implode(', ', $joinClasses);
+            error_log('COMMAS: ' . $commas);
+            $sql = str_replace('WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas. '))',
+                "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
+                $sql);
+           // $sql = str_replace('WHERE (`SiteTree`.`ClassName` IN (?, ?))', "WHERE (`SiteTree`.`ClassName` IN ('{$joinClasses[0]}', '{$joinClasses[1]}'))", $sql);
+
+
+            error_log('--------------------');
+            error_log($sql);
+            error_log($commas);
+            error_log($columns);
+            error_log('/--------------------');
+
+
 
             $sqlArray = explode(PHP_EOL, $sql);
             $sql = implode(' \\' . "\n", $sqlArray);

@@ -9,16 +9,17 @@
 namespace Suilven\SphinxSearch\Service;
 
 
+use Foolz\SphinxQL\Facet;
 use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\PaginatedList;
 use SilverStripe\View\ArrayData;
+use Suilven\FreeTextSearch\Indexes;
 
 class Searcher
 {
-    private $indexNames = null;
 
     private $client;
 
@@ -37,6 +38,14 @@ class Searcher
     }
 
     /**
+     * @param string $index
+     */
+    public function setIndex($index)
+    {
+        $this->index = $index;
+    }
+
+    /**
      * @param int $page
      */
     public function setPage($page)
@@ -49,10 +58,6 @@ class Searcher
         $this->client = new Client();
     }
 
-    public function setIndexes($indexNames)
-    {
-        $this->indexNames = $indexNames;
-    }
 
     public function search($q)
     {
@@ -61,12 +66,23 @@ class Searcher
 
         $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();
+
+        // @todo make fields configurable?
         $query = SphinxQL::create($connection)->select('id')
             ->from($this->index .'_index', $this->index  . '_rt')
-            ->match('title', $q); // @todo try ? for wildcard
+            ->match('?', $q); // @todo try ? for wildcard
+
+        $facet = Facet::create($connection);
+        $facet->facet('iso', 'aperture');
+        $facet->limit(0, 10000000);
+
+        //SELECT * FROM flickr_index LIMIT 0,10 FACET lastedited;
 
         $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
         $result = $query->execute();
+
+
+        echo print_r($result, 1);
 
         $metaQuery = SphinxQL::create($connection)->query('SHOW META;');
         $metaData = $metaQuery->execute();
@@ -85,7 +101,23 @@ class Searcher
         foreach($result->fetchAllAssoc() as $assoc) {
             // @todo use array merge to minimize db queries
             // @todo need to get this from the index definition
-            $dataobject = DataObject::get_by_id('SilverStripe\CMS\Model\SiteTree', $assoc['id']);
+
+            $indexesService = new Indexes();
+            $indexes = $indexesService->getIndexes();
+
+            $clazz = '';
+
+            // @todo fix this, return an associative array from the above
+            foreach($indexes as $indexObj)
+            {
+                $name = $indexObj->getName();
+                if ($name == $this->index) {
+                    $clazz = $indexObj->getClass();
+                    break;
+                }
+            }
+
+            $dataobject = DataObject::get_by_id($clazz, $assoc['id']);
 
             // Get highlight snippets
             $snippets = Helper::create($connection)->callSnippets(
