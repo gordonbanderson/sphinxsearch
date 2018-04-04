@@ -69,61 +69,34 @@ class Searcher
         $connection = $this->client->getConnection();
 
         // @todo make fields configurable?
-        $result = SphinxQL::create($connection)->select('id')
-            ->from([$this->index .'_index', $this->index  . '_rt'])
-            ->match('?', $q)
+        $query = SphinxQL::create($connection)->select('id')
+            ->from([$this->index .'_index', $this->index  . '_rt']);
+
+        $query->match('?', $q)
             ->facet(Facet::create($connection)
                 ->facet(array('shutterspeed'))
-                ->orderBy('shutterspeed', 'ASC'))
-            ->executeBatch()
+                ->orderBy('shutterspeed', 'ASC')
+            );
+
+        $query->facet(Facet::create($connection)
+            ->facet(array('iso'))
+            ->orderBy('iso', 'ASC')
+        );
+
+        $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
+
+        /** @var array $result */
+        $result = $query->executeBatch()
             ->getStored();
 
-        echo "\n\n\n\n";
+        /** @var ResultSet $resultSet */
+        $resultSet = $result[0];
 
-        echo print_r($result, 1);
-        die;
-        ; // @todo try ? for wildcard
+        $ids = $resultSet->fetchAllAssoc();
 
-
-        // facets cause a break on show meta
-       //  $facet = Facet::create($connection);
-       // $facet->facet('iso');
-     //   $query->facet($facet);
-
-
-/*
-        $result = SphinxQL::create(self::$conn)
-            ->select()
-            ->from('rt')
-            ->facet(Facet::create($conn)
-                ->facet(array('gid'))
-                ->orderBy('gid', 'ASC'))
-            ->executeBatch()
-            ->getStored();
-*/
-
-
-
-        //SELECT * FROM flickr_index LIMIT 0,10 FACET lastedited;
-
-      //  $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
-
-        /** @var ResultSet $result */
-
-
-        $ids = $result->fetchAllAssoc();
-        $result->freeResult();
-
-        echo "\n\n\n\n";
-
-        echo print_r($result, 1);
 
         $metaQuery = SphinxQL::create($connection)->query('SHOW META;');
         $metaData = $metaQuery->execute();
-
-        error_log('---- META DATA ----');
-        echo '****************** >>>>>' . print_r($metaData, 1);
-
 
         $searchInfo = [];
         foreach($metaData->getStored() as $info) {
