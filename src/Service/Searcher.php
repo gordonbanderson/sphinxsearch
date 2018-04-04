@@ -31,6 +31,11 @@ class Searcher
     private $index = 'sitetree';
 
     /**
+     * @var array tokens that are facetted, e.g. Aperture, BlogID
+     */
+    private $facettedTokens = [];
+
+    /**
      * @param int $pageSize
      */
     public function setPageSize($pageSize)
@@ -45,6 +50,16 @@ class Searcher
     {
         $this->index = $index;
     }
+
+
+    /**
+     * @param array $facettedTokens
+     */
+    public function setFacettedTokens($facettedTokens)
+    {
+        $this->facettedTokens = $facettedTokens;
+    }
+
 
     /**
      * @param int $page
@@ -72,16 +87,16 @@ class Searcher
         $query = SphinxQL::create($connection)->select('id')
             ->from([$this->index .'_index', $this->index  . '_rt']);
 
-        $query->match('?', $q)
-            ->facet(Facet::create($connection)
-                ->facet(array('shutterspeed'))
-                ->orderBy('shutterspeed', 'ASC')
-            );
+        $query->match('?', $q);
 
-        $query->facet(Facet::create($connection)
-            ->facet(array('iso'))
-            ->orderBy('iso', 'ASC')
-        );
+        foreach($this->facettedTokens as $tokenToFacet) {
+            $query->facet(Facet::create($connection)
+                ->facet(array($tokenToFacet))
+                // @todo->orderBy('iso', 'ASC')
+            );
+        }
+
+
 
         $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
 
@@ -94,6 +109,27 @@ class Searcher
 
         $ids = $resultSet->fetchAllAssoc();
 
+        $ctr = 1;
+        $facets = [];
+        foreach($this->facettedTokens as $token)
+        {
+            $resultSet = $result[$ctr];
+            $rawFacets = $resultSet->fetchAllAssoc();
+            $tokenFacets = [];
+            foreach($rawFacets as $singleFacet) {
+                if (isset($singleFacet[$token])) {
+                    $value = $singleFacet[$token];
+                    $count = $singleFacet['count(*)'];
+
+                    // do this way to maintain order from Sphinx
+                    $tokenFacets[] = ['Value' => $value, 'Count' => $count];
+                }
+            }
+            $ctr++;
+
+            // @todo huyman readable title
+            $facets[] = ['Name' => $token, 'Facets' => new ArrayList($tokenFacets)];
+        }
 
         $metaQuery = SphinxQL::create($connection)->query('SHOW META;');
         $metaData = $metaQuery->execute();
@@ -170,7 +206,8 @@ class Searcher
             'TotalPages' => 1+round($searchInfo['total_found'] / $this->pageSize),
             'ResultsFound' => $searchInfo['total_found'],
             'Time' => $elapsed/1000.0,
-            'Pagination' => $pagination
+            'Pagination' => $pagination,
+            'AllFacets' => empty($facets) ? False : new ArrayList($facets)
         ];
     }
 }
