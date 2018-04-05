@@ -107,10 +107,8 @@ class Searcher
 
         // string int fixes needed here
         foreach($this->filters as $key => $value) {
-            echo 't0:' . ctype_digit('42');
             if ($key !== 'q') {
                 if (ctype_digit($value)) {
-                    echo 'T2';
                     if (is_int($value + 0)) {
                         $value = (int) $value;
                     }
@@ -131,14 +129,8 @@ class Searcher
         }
 
 
-
         $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
 
-        // filters
-        echo 'FILTERS ' . print_r($this->filters, 1);
-        foreach($this->filters as $k) {
-            echo $k;
-        }
 
         /** @var array $result */
         $result = $query->executeBatch()
@@ -162,7 +154,28 @@ class Searcher
                     $count = $singleFacet['count(*)'];
 
                     // do this way to maintain order from Sphinx
-                    $tokenFacets[] = ['Value' => $value, 'Count' => $count, 'Name' => $token, 'ExtraParam' => "$token=$value"];
+                    $nextFacet = ['Value' => $value, 'Count' => $count, 'Name' => $token, 'ExtraParam' => "$token=$value"];
+                    $filterForFacet = $this->filters;
+
+                    if (isset($this->filters[$token])) {
+                        $nextFacet['Selected'] = true;
+                        unset($filterForFacet[$token]);
+                    } else {
+                        // additional value to the URL, unselected facet
+                        $filterForFacet[$token] = $value;
+                    }
+
+                    // @todo - escaping?
+                    $urlParams = '';
+                    foreach($filterForFacet as $n => $v) {
+                        //if (!isset($this->filters[$token])) {
+                            $urlParams .= "{$n}={$v}&";
+                       // }
+                    }
+
+                    $nextFacet['Params'] = substr($urlParams, 0, -1);
+
+                    $tokenFacets[] = $nextFacet;
                 }
             }
             $ctr++;
