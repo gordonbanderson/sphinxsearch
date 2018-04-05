@@ -36,6 +36,19 @@ class Searcher
     private $facettedTokens = [];
 
     /**
+     * @var array associative array of filters against tokens
+     */
+    private $filters = [];
+
+    /**
+     * @param array $filters
+     */
+    public function setFilters($filters)
+    {
+        $this->filters = $filters;
+    }
+
+    /**
      * @param int $pageSize
      */
     public function setPageSize($pageSize)
@@ -87,7 +100,28 @@ class Searcher
         $query = SphinxQL::create($connection)->select('id')
             ->from([$this->index .'_index', $this->index  . '_rt']);
 
-        $query->match('?', $q);
+        if (!empty($q)) {
+            $query->match('?', $q);
+        }
+
+
+        // string int fixes needed here
+        foreach($this->filters as $key => $value) {
+            echo 't0:' . ctype_digit('42');
+            if ($key !== 'q') {
+                if (ctype_digit($value)) {
+                    echo 'T2';
+                    if (is_int($value + 0)) {
+                        $value = (int) $value;
+                    }
+                    else if (is_float($value + 0)) {
+                        $value = (float) $value;
+                    }
+                }
+
+                $query->where($key, $value);
+            }
+        }
 
         foreach($this->facettedTokens as $tokenToFacet) {
             $query->facet(Facet::create($connection)
@@ -99,6 +133,12 @@ class Searcher
 
 
         $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
+
+        // filters
+        echo 'FILTERS ' . print_r($this->filters, 1);
+        foreach($this->filters as $k) {
+            echo $k;
+        }
 
         /** @var array $result */
         $result = $query->executeBatch()
@@ -122,7 +162,7 @@ class Searcher
                     $count = $singleFacet['count(*)'];
 
                     // do this way to maintain order from Sphinx
-                    $tokenFacets[] = ['Value' => $value, 'Count' => $count];
+                    $tokenFacets[] = ['Value' => $value, 'Count' => $count, 'Name' => $token, 'ExtraParam' => "$token=$value"];
                 }
             }
             $ctr++;
@@ -164,24 +204,28 @@ class Searcher
 
             $dataobject = DataObject::get_by_id($clazz, $assoc['id']);
 
-            // Get highlight snippets
-            $snippets = Helper::create($connection)->callSnippets(
+            // Get highlight snippets, but only if a query parameter was passed in
+            if (!empty($q)) {
+                $snippets = Helper::create($connection)->callSnippets(
                 // @todo get from index, need all text fields
-                $dataobject->Title . ' ' . $dataobject->Content,
-                //@todo hardwired
-                'sitetree_index',
-                $q,
-                [
-                    'around' => 10,
-                    'limit' => 200,
-                    'before_match' => '<b>',
-                    'after_match' => '</b>',
-                    'chunk_separator' => '...',
-                    'html_strip_mode' => 'strip',
-                ]
-            )->execute()->getStored();
+                    $dataobject->Title . ' ' . $dataobject->Content,
+                    //@todo hardwired
+                    'sitetree_index',
+                    $q,
+                    [
+                        'around' => 10,
+                        'limit' => 200,
+                        'before_match' => '<b>',
+                        'after_match' => '</b>',
+                        'chunk_separator' => '...',
+                        'html_strip_mode' => 'strip',
+                    ]
+                )->execute()->getStored();
+                $dataobject->Snippets = $snippets[0]['snippet'];
+            }
 
-            $dataobject->Snippets = $snippets[0]['snippet'];
+
+
 
             $formattedResult = new ArrayData([
                 'Record' => $dataobject
