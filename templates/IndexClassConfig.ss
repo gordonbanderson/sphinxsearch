@@ -60,6 +60,11 @@ index {$IndexName}_index
 	# See http://sphinxsearch.com/docs/current/conf-morphology.html for alternative languages
 	morphology		= stem_en
 
+min_word_len = 3
+charset_type = utf-8
+enable_star = 1
+min_infix_len=2
+
     html_strip = 1
 }
 
@@ -105,4 +110,10 @@ index {$IndexName}_rt
 	# rt_attr_multi		= tags
 	# rt_attr_multi_64	= tags64
 	# rt_attr_json		= extra_data
+
+    dict=keywords
+min_word_len = 3
+charset_type = utf-8
+enable_star = 1
+min_infix_len=2
 }
