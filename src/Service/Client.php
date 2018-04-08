@@ -26,4 +26,12 @@ class Client
         $conn->setParams(array('host' => $host, 'port' => $port));
         return $conn;
     }
+
+    // see https://stackoverflow.com/questions/6275042/how-to-escape-special-characters-in-sphinxql-fulltext-search
+    function escapeSphinxQL ( $string )
+    {
+        $from = array ( '\\', '(',')','|','-','!','@','~','"','&', '/', '^', '$', '=', "'", "\x00", "\n", "\r", "\x1a" );
+        $to   = array ( '\\\\', '\\\(','\\\)','\\\|','\\\-','\\\!','\\\@','\\\~','\\\"', '\\\&', '\\\/', '\\\^', '\\\$', '\\\=', "\\'", "\\x00", "\\n", "\\r", "\\x1a" );
+        return str_replace ( $from, $to, $string );
+    }
 }
