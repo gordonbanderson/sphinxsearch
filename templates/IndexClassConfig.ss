@@ -60,6 +60,8 @@ index {$IndexName}_index
 	# See http://sphinxsearch.com/docs/current/conf-morphology.html for alternative languages
 	morphology		= stem_en
 
+#This enables suggest CALL QSUGGEST('cyclin','flickr_index');
+#See also https://docs.manticoresearch.com/latest/html/sphinxql_reference/call_qsuggest_syntax.html
 min_word_len = 3
 charset_type = utf-8
 enable_star = 1
