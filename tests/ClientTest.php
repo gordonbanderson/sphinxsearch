@@ -18,11 +18,9 @@ class ClientTest extends SapphireTest
 {
     public function testClient()
     {
-        $client = new Client();
-
         $indexesService = new Indexes();
         $indexes = $indexesService->getIndexes();
         $indexer = new Indexer($indexes);
-        $configs = $indexer->saveConfig();
+        $indexer->saveConfig();
     }
 }

@@ -30,7 +30,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Suilven\\SphinxSearch\\": "tests"
+            "Suilven\\SphinxSearch\\Tests\\": "tests"
         }
     },
     "scripts": {

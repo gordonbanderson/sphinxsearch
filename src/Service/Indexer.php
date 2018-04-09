@@ -41,14 +41,10 @@ class Indexer
     /**
      * Generate config
      *
-     * @todo Generic names, just want to get a first cut working :)
-     *
      * @return array of filename => sphinx config
      */
     public function generateConfig()
     {
-
-
         $allConfigs = [];
 
 
@@ -64,8 +60,6 @@ class Indexer
 
             $name = $index->getName();
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
-
-
 
 
             // these are stored in the db but not part of free text search, a bit like tokens I guess
@@ -275,14 +269,33 @@ class Indexer
         return $allConfigs;
     }
 
+    /**
+     * Create a valid sphinx.conf file and save it.  Note that the commandline or web server user must have write
+     * access to the path defined in _config.
+     */
     public function saveConfig()
     {
+        // specific to the runnnig of sphinx
+        $common = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+            . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'common.conf');
+        $indexer = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+            . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'indexer.conf');
+        $searchd = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+            . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'searchd.conf');
+
+
+        // specific to silverstripe data
         $sphinxConfigurations = $this->generateConfig();
-        $sphinxSavePath = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'config_dir');
+        $sphinxSavePath = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'config_file');
+
+        $config = $common . $indexer . $searchd;
 
         foreach(array_keys($sphinxConfigurations) as $filename) {
-            $saveTo = $sphinxSavePath . '/' .$filename . '.conf';
-            file_put_contents($saveTo,$sphinxConfigurations[$filename]);
+            $config .= $sphinxConfigurations[$filename];
         }
+
+        file_put_contents($sphinxSavePath, $config);
+
+        error_log('CONFIG SAVED: ' . $config);
     }
 }

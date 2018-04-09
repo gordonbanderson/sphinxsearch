@@ -11,85 +11,80 @@ namespace Suilven\SphinxSearch\Tests;
 
 use Foolz\SphinxQL\Facet;
 use Foolz\SphinxQL\Helper;
+use Model\Photo;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 
 use Foolz\SphinxQL\SphinxQL;
 use Foolz\SphinxQL\Connection;
 use SilverStripe\ORM\DataObject;
+use Suilven\FreeTextSearch\Indexes;
+use Suilven\SphinxSearch\Service\Client;
+use Suilven\SphinxSearch\Service\Indexer;
+use Suilven\SphinxSearch\Service\Searcher;
 
 class SphinxTest extends SapphireTest
 {
+    protected static $fixture_file = 'sphinxsearch/fixtures.yml';
+
+    const INDEX_NAME = 'photographs';
+
+
+    protected static $extra_dataobjects = [
+        Photo::class
+    ];
+
+
+    /**
+     * Recreate the sphinx index clean each time
+     */
     public function setUp()
     {
         parent::setUp();
+
+        // override index definitions for testing
+        Config::inst()->nest();
+        Config::inst()->update('Suilven\FreeTextSearch\Indexes', 'indexes', [
+            [
+                // @todo, this does not look right
+                'index' => [
+                    'name' => self::INDEX_NAME,
+                    'class' => 'Model\Photo',
+                    'fields' => [
+                        'Title',
+                        'Description'
+                    ]
+                ]
+            ]
+        ]);
+
+        // save config
+        $indexesService = new Indexes();
+        $indexes = $indexesService->getIndexes();
+        $indexer = new Indexer($indexes);
+        $indexer->saveConfig();
+
+        // perhaps should be Server instead of Client
+        $client = new Client();
+        $client->reindex();
+
     }
 
-    public function testSearch()
+    public function test_search()
     {
+
+        foreach(Photo::get() as $photo) {
+            error_log('FROM DB: ' . $photo->Title);
+        }
+
         // create a SphinxQL Connection object to use with SphinxQL
         $conn = new \Foolz\SphinxQL\Drivers\Pdo\Connection();
         $conn->setParams(array('host' => 'sphinx', 'port' => 9306));
 
-       // $query = SphinxQL::create($conn)->select('column_one', 'colume_two')
-       //     ->from('index_ancient', 'index_main', 'index_delta')
-       //     ->match('comment', 'my opinion is superior to yours')
-       //     ->where('banned', '=', 1);
-
-        $searchText = 'the';
-
-        $query = SphinxQL::create($conn)->select('id')
-            ->from('myapp_index', 'myapp_rt')
-            ->match('comment', $searchText);
-
-        $result = $query->execute();
-
-        foreach($result->fetchAllAssoc() as $assoc) {
-            error_log(print_r($assoc, 1));
-            $comment = DataObject::get_by_id('SilverStripe\Comments\Model\Comment', $assoc['id']);
-
-            //5 AS around, 200 AS limit,
-            $snippets = Helper::create($conn)->callSnippets(
-                $comment->Comment,
-                'myapp_index',
-                $searchText,
-                [
-                    'around' => 10,
-                    'limit' => 200,
-                    'before_match' => '*',
-                    'after_match' => '*',
-                    'chunk_separator' => '...',
-                    'html_strip_mode' => 'strip',
-                ]
-            )->execute()->getStored();
-
-        }
-
-        // @todo show in search needs taken account of ShowInSearch
-
-        /*
-         * SELECT *, IN(brand_id,1,2,3,4) AS b FROM facetdemo WHERE MATCH('Product') AND b=1 LIMIT 0,10
-FACET brand_name, brand_id BY brand_id ORDER BY brand_id ASC
-FACET property ORDER BY COUNT(*) DESC
-FACET INTERVAL(price,200,400,600,800) ORDER BY FACET() ASC
-FACET categories ORDER BY FACET() ASC;
-         */
-        error_log('---- facets ----');
-
-        $facet = Facet::create($conn)
-            ->facet(array('parentid', 'id'))
-            ->getFacet();
-
-        $query = SphinxQL::create($conn)->select('id')
-            ->from('myapp_index', 'myapp_rt')
-            ->match('comment', $searchText)
-            ->facet(
-                Facet::create($conn)
-                    ->facet(array('parentid'))
-            );
-
-        $result = $query->execute();
-
-        error_log('RESULTS: ' . print_r($result->fetchAllAssoc(), 1));
+        $searcher = new Searcher();
+        $searcher->setIndex(self::INDEX_NAME);
+        $results = $searcher->search('Central Bangkok');
+        error_log(print_r($results, 1));
 
     }
 }

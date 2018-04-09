@@ -34,4 +34,25 @@ class Client
         $to   = array ( '\\\\', '\\\(','\\\)','\\\|','\\\-','\\\!','\\\@','\\\~','\\\"', '\\\&', '\\\/', '\\\^', '\\\$', '\\\=', "\\'", "\\x00", "\\n", "\\r", "\\x1a" );
         return str_replace ( $from, $to, $string );
     }
+
+    public function restartServer()
+    {
+        $restartCommand = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'cmd_restart');
+        exec($restartCommand);
+    }
+
+
+    /**
+     * Execute reindex command.  @todo Can this be done using SphinxQL?
+     */
+    public function reindex()
+    {
+        $reindexCommand = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'cmd_reindex');
+
+        // @todo Fix, config not working here
+        $reindexCommand = '/usr/bin/indexer --config /usr/local/etc/sphinx.conf --rotate --all';
+
+        error_log('reindex command ' . $reindexCommand);
+        exec($reindexCommand);
+    }
 }

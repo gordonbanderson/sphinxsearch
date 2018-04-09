@@ -35,6 +35,9 @@ before_script:
   - composer require --no-update silverstripe/recipe-cms:1.0.x-dev
   - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
+  #Possibly...
+  #sudo chmod 664 /etc/sphinxsearch/sphinx.conf
+
 script:
   - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml tests/php; fi
