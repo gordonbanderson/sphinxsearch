@@ -14,11 +14,21 @@ matrix:
       env: DB=MYSQL PHPUNIT_TEST=1
     - php: 7.1
       env: DB=MYSQL PHPUNIT_COVERAGE_TEST=1
+    - php: 7.2
+      env: DB=PGSQL PHPUNIT_TEST=1
 
 before_script:
   # Init PHP
   - phpenv rehash
   - phpenv config-rm xdebug.ini
+
+  - if [[ $DB == PGSQL ]]; then composer require --prefer-dist --no-update silverstripe/postgresql 2.0.x-dev; fi
+  - composer require --prefer-dist --no-update silverstripe/installer:4.0.x-dev
+  - composer update
+
+  - wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~xenial_amd64.deb && sudo dpkg -i sphinxsearch_2.3.2-beta-1~xenial_amd64.deb
+  - sudo apt-get -f install
+
 
   # Install composer dependencies
   - composer validate
@@ -29,6 +39,15 @@ script:
   - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml tests/php; fi
   - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs src/ tests/; fi
+
+after_success:
+  - if [[ $PHPUNIT_COVERAGE_TEST ]]; then bash <(curl -s https://codecov.io/bash) -f coverage.xml; fi
+
+
+script:
+  - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit; fi
+  - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml; fi
+  - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs --standard=vendor/silverstripe/framework/phpcs.xml.dist src/; fi
 
 after_success:
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then bash <(curl -s https://codecov.io/bash) -f coverage.xml; fi
