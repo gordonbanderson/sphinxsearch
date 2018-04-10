@@ -12,12 +12,14 @@ namespace Suilven\SphinxSearch\Tests;
 use Foolz\SphinxQL\Facet;
 use Foolz\SphinxQL\Helper;
 use Model\Photo;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 
 use Foolz\SphinxQL\SphinxQL;
 use Foolz\SphinxQL\Connection;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DB;
 use Suilven\FreeTextSearch\Indexes;
 use Suilven\SphinxSearch\Service\Client;
 use Suilven\SphinxSearch\Service\Indexer;
@@ -42,9 +44,16 @@ class SphinxTest extends SapphireTest
     {
         parent::setUp();
 
+        // seems to be using the default
+
+        error_log('IS DEV? ' . Director::isDev());
+        error_log('IS TEST? ' . Director::isTest());
+
+
         // override index definitions for testing
-        Config::inst()->nest();
-        Config::inst()->update('Suilven\FreeTextSearch\Indexes', 'indexes', [
+       // Config::inst()->nest();
+
+        $indexes = [
             [
                 // @todo, this does not look right
                 'index' => [
@@ -56,12 +65,19 @@ class SphinxTest extends SapphireTest
                     ]
                 ]
             ]
-        ]);
+        ];
+
+        $database = DB::get_conn()->getSelectedDatabase();
+        $databaseHost = DB::get_conn()->getDatabaseServer();
+
+        error_log('TEMP DB: ' . print_r($database, 1));
+        error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
 
         // save config
         $indexesService = new Indexes();
-        $indexes = $indexesService->getIndexes();
+        $indexes = $indexesService->getIndexes($indexes);
         $indexer = new Indexer($indexes);
+        $indexer->setDatabaseName($database);
         $indexer->saveConfig();
 
         // perhaps should be Server instead of Client
@@ -77,9 +93,6 @@ class SphinxTest extends SapphireTest
             error_log('FROM DB: ' . $photo->Title);
         }
 
-        // create a SphinxQL Connection object to use with SphinxQL
-        $conn = new \Foolz\SphinxQL\Drivers\Pdo\Connection();
-        $conn->setParams(array('host' => 'sphinx', 'port' => 9306));
 
         $searcher = new Searcher();
         $searcher->setIndex(self::INDEX_NAME);

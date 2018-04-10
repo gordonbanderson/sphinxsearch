@@ -24,6 +24,10 @@ use Suilven\FreeTextSearch\Indexes;
 
 class Indexer
 {
+    protected $databaseName;
+
+    protected $databaseHost;
+
     /**
      * @var null|Indexes indexes in current context
      */
@@ -36,6 +40,22 @@ class Indexer
     public function __construct($indexes)
     {
         $this->indexes = $indexes;
+    }
+
+    /**
+     * @param mixed $databaseName
+     */
+    public function setDatabaseName($databaseName)
+    {
+        $this->databaseName = $databaseName;
+    }
+
+    /**
+     * @param mixed $databaseHost
+     */
+    public function setDatabaseHost($databaseHost)
+    {
+        $this->databaseHost = $databaseHost;
     }
 
     /**
@@ -250,12 +270,14 @@ class Indexer
             $params = new ArrayData([
                'IndexName' => $name,
                'SQL' => 'SQL_QUERY_HERE',
-                'DB_HOST' => Environment::getEnv('SS_DATABASE_SERVER'),
+                'DB_HOST' => !empty($this->databaseHost) ? $this->databaseHost : Environment::getEnv('SS_DATABASE_SERVER'),
                 'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
                 'DB_PASSWD' => Environment::getEnv('SS_DATABASE_PASSWORD'),
-                'DB_NAME' => Environment::getEnv('SS_DATABASE_NAME'),
+                'DB_NAME' => !empty($this->databaseName) ? $this->databaseName : Environment::getEnv('SS_DATABASE_NAME'),
                 'Attributes' => $attributes,
             ]);
+
+            error_log('INDEXER PARAMS:' . print_r($params, 1));
 
             $configuraton = $params->renderWith('IndexClassConfig');
 

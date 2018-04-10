@@ -215,6 +215,8 @@ class Searcher
                 }
             }
 
+            error_log('CLASS: ' . $clazz);
+
             $dataobject = DataObject::get_by_id($clazz, $assoc['id']);
 
             // Get highlight snippets, but only if a query parameter was passed in

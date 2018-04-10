@@ -15,7 +15,7 @@ Suilven\SphinxSearch\Service\Client:
   #config_path: '/usr/local/etc/sphinx.conf'
 
   #The command to reindex, if empty use inotify to trigger instead
-  cmd_reindex: '/usr/bin/indexer --config /usr/local/etc/sphinx.conf --rotate --all'
+  cmd_reindex: 'sudo /usr/bin/indexer --rotate --all'
 
   #Note that the webserver user needs to be able to do this
   cmd _restart: 'sudo service sphinxsearch restart'

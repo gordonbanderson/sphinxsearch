@@ -22,6 +22,11 @@ class Client
     {
         $host = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'host');
         $port = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
+
+        error_log('HOST: ' . $host);
+        error_log('PORT: ' . $port);
+
+
         $conn = new \Foolz\SphinxQL\Drivers\Pdo\Connection();
         $conn->setParams(array('host' => $host, 'port' => $port));
         return $conn;
@@ -50,9 +55,9 @@ class Client
         $reindexCommand = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'cmd_reindex');
 
         // @todo Fix, config not working here
-        $reindexCommand = '/usr/bin/indexer --config /usr/local/etc/sphinx.conf --rotate --all';
+        //$reindexCommand = '/usr/bin/indexer --rotate --all';
 
         error_log('reindex command ' . $reindexCommand);
-        exec($reindexCommand);
+        error_log(exec($reindexCommand));
     }
 }
