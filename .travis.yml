@@ -42,18 +42,15 @@ before_script:
   - composer validate
   - composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
 
-  #Make minimum stability dev
-
-
+  # Make minimum stability dev
   - cat composer.json | jq --arg minstability dev '. + {"minimum-stability":$minstability}' > composer.tmp && mv composer.tmp composer.json
-
-  #echo '{"hello": "world"}' | jq --arg foo bar '. + {foo: $foo}'
 
   - if [[ $DB == PGSQL ]]; then composer require --prefer-dist --no-update silverstripe/postgresql:2.0.x-dev; fi
   - if [[ $DB == SQLITE ]]; then composer require --prefer-dist --no-update silverstripe/sqlite3:2.0.x-dev; fi
   - if [[ $PHPCS_TEST ]]; then composer global require squizlabs/php_codesniffer:^3 --prefer-dist --no-interaction --no-progress --no-suggest -o; fi
   - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
+  # 14.04 package fails to start for Sphinx 2.3.2 beta, as such build from source :(
   - git clone https://github.com/sphinxsearch/sphinx.git build
   - cd build
   - ./configure
@@ -63,6 +60,8 @@ before_script:
   - rm -rf build
 
 script:
+  - echo '********'
+  - ls -lh
   - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml tests/php; fi
   - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs src/ tests/; fi
