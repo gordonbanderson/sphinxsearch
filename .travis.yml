@@ -23,18 +23,10 @@ matrix:
 before_script:
   - sudo apt-get -qq update
 
-  - sudo apt-cache search mysql | grep dev
-
   # jq for composer.json manipulation, reset for sphinxsearch
   - sudo apt-get install -y jq build-essential libmysqlclient-dev
 
-  - git clone https://github.com/sphinxsearch/sphinx.git
-  - cd sphinx
-  - ./configure
-  - make
-  - sudo make install
-  - cd ..
-  - ls -lh
+
 
   #Double check OS version
   - cat /etc/issue
@@ -70,6 +62,14 @@ before_script:
 
   #Possibly...
   #sudo chmod 664 /etc/sphinxsearch/sphinx.conf
+  
+  - git clone https://github.com/sphinxsearch/sphinx.git
+  - cd sphinx
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
+  - ls -lh
 
 script:
   - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
