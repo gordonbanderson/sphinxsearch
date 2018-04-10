@@ -65,7 +65,7 @@ after_success:
 
 
 script:
-  - if [[ $PHPUNIT_TEST ]]; then echo 'T2' && vendor/bin/phpunit; fi
+  - if [[ $PHPUNIT_TEST ]]; then echo 'T2' && find . && vendor/bin/phpunit; fi
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml; fi
   - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs --standard=vendor/silverstripe/framework/phpcs.xml.dist src/; fi
 
