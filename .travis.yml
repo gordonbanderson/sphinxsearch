@@ -1,6 +1,6 @@
 language: php
 
-dist: beaver
+dist: xenial
 
 env:
   global:
@@ -21,6 +21,9 @@ matrix:
 before_script:
   - sudo apt-get -qq update
   - sudo apt-get install -y jq
+
+  #Double check OS version
+  - cat /etc/issue
 
   # Init PHP
   - phpenv rehash
