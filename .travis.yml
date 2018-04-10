@@ -1,6 +1,8 @@
 language: php
 
+#This does not work :(
 dist: xenial
+group: travis_latest
 
 env:
   global:
