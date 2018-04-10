@@ -27,7 +27,7 @@ jobs:
       only:
         - master
         - develop
-        - /feature.*/
+        - travis
 
     steps:
       - checkout
@@ -40,6 +40,8 @@ jobs:
             - v1-dependencies-
 
       - run: composer install -n --prefer-dist
+
+      - run: ls -lh
 
       - save_cache:
           paths:
