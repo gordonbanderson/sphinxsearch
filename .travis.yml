@@ -59,20 +59,13 @@ before_script:
   - cd ..
   - rm -rf build
 
-script:
-  - echo '********'
-  - ls -lh
-  - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
-  - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml tests/php; fi
-  - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs src/ tests/; fi
-  - if [[ $PHPCS_TEST ]]; then composer run-script lint; fi
 
 after_success:
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then bash <(curl -s https://codecov.io/bash) -f coverage.xml; fi
 
 
 script:
-  - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit; fi
+  - if [[ $PHPUNIT_TEST ]]; then echo 'T2' && vendor/bin/phpunit; fi
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml; fi
   - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs --standard=vendor/silverstripe/framework/phpcs.xml.dist src/; fi
 
