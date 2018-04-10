@@ -39,6 +39,8 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
+      - run: pwd
+      - run: apk add jq
       - run: composer validate
       - run: composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
       - run: composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
