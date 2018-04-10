@@ -28,12 +28,7 @@ before_script:
   # jq for composer.json manipulation, reset for sphinxsearch
   - sudo apt-get install -y jq build-essential libmysqlclient-dev
 
-  #- git clone https://github.com/sphinxsearch/sphinx.git
-  #- cd sphinx
-  #- ./configure
-  #- make
-  #- sudo make install
-  #- cd ..
+
 
   #Double check OS version
   - cat /etc/issue
@@ -59,17 +54,13 @@ before_script:
   - if [[ $PHPCS_TEST ]]; then composer global require squizlabs/php_codesniffer:^3 --prefer-dist --no-interaction --no-progress --no-suggest -o; fi
   - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
-#  - wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb && sudo dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
-#  - sudo apt-get -f install
-
-
-  # Install composer dependencies
-  - composer validate
-  - composer require --no-update silverstripe/recipe-cms:1.0.x-dev
-  - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
-
-  #Possibly...
-  #sudo chmod 664 /etc/sphinxsearch/sphinx.conf
+  - git clone https://github.com/sphinxsearch/sphinx.git build
+  - cd build
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
+  - rm -rf build
 
 script:
   - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit tests/php; fi
