@@ -43,6 +43,8 @@ jobs:
 
       - run: ls -lh
 
+      - run: find /var/www
+
       - save_cache:
           paths:
             - ./vendor
