@@ -31,7 +31,9 @@ before_script:
   - composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
 
   #Make minimum stability dev
-  - cat composer.json | jq --arg minstability dev '. + {"minimum-stability": $minstability}' > composer.tmp && mv composer.tmp composer.json
+
+
+  - cat composer.json | jq --arg minstability dev '. + {"minimum-stability":$minstability}' > composer.tmp && mv composer.tmp composer.json
 
   #echo '{"hello": "world"}' | jq --arg foo bar '. + {foo: $foo}'
 
