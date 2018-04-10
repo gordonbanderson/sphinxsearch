@@ -44,15 +44,6 @@ class SphinxTest extends SapphireTest
     {
         parent::setUp();
 
-        // seems to be using the default
-
-        error_log('IS DEV? ' . Director::isDev());
-        error_log('IS TEST? ' . Director::isTest());
-
-
-        // override index definitions for testing
-       // Config::inst()->nest();
-
         $indexes = [
             [
                 // @todo, this does not look right
@@ -67,6 +58,26 @@ class SphinxTest extends SapphireTest
             ]
         ];
 
+        Config::nest();
+
+        Config::inst()->update('Suilven\FreeTextSearch\Indexes', 'indexes', $indexes);
+
+        $cf = Config::inst()->get('Suilven\FreeTextSearch\Indexes', 'indexes');
+
+        $all = Config::inst()->getAll();
+        error_log('CF: ' . print_r($cf, 1));
+
+        // seems to be using the default
+
+        error_log('IS DEV? ' . Director::isDev());
+        error_log('IS TEST? ' . Director::isTest());
+
+
+        // override index definitions for testing
+       // Config::inst()->nest();
+
+
+
         $database = DB::get_conn()->getSelectedDatabase();
         $databaseHost = DB::get_conn()->getDatabaseServer();
 
@@ -75,8 +86,8 @@ class SphinxTest extends SapphireTest
 
         // save config
         $indexesService = new Indexes();
-        $indexes = $indexesService->getIndexes($indexes);
-        $indexer = new Indexer($indexes);
+        $indexesObj = $indexesService->getIndexes();
+        $indexer = new Indexer($indexesObj);
         $indexer->setDatabaseName($database);
         $indexer->saveConfig();
 
