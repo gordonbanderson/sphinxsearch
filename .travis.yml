@@ -1,8 +1,7 @@
 language: php
 
-#This does not work :(
-dist: xenial
-group: travis_latest
+#This appears to be the only option at time of writing
+dist: trusty
 
 env:
   global:
@@ -50,7 +49,7 @@ before_script:
   - if [[ $PHPCS_TEST ]]; then composer global require squizlabs/php_codesniffer:^3 --prefer-dist --no-interaction --no-progress --no-suggest -o; fi
   - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
-  - wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~xenial_amd64.deb && sudo dpkg -i sphinxsearch_2.3.2-beta-1~xenial_amd64.deb
+  - wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb && sudo dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
   - sudo apt-get -f install
 
 
