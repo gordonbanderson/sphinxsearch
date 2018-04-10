@@ -17,11 +17,11 @@ matrix:
     - php: 7.2
       env: DB=PGSQL PHPUNIT_TEST=1
 
-before_install:
+
+before_script:
   - sudo apt-get -qq update
   - sudo apt-get install -y jq
 
-before_script:
   # Init PHP
   - phpenv rehash
   - phpenv config-rm xdebug.ini
