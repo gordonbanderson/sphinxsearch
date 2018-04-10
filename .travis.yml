@@ -23,11 +23,11 @@ before_script:
   - sudo apt-get -qq update
 
   - sudo apt-cache search mysql | grep dev
-  
+
   # jq for composer.json manipulation, reset for sphinxsearch
   - sudo apt-get install -y jq build-essential
 
-  - git clone git@github.com:sphinxsearch/sphinx.git
+  - git clone https://github.com/sphinxsearch/sphinx.git
   - cd sphinx
   - ./configure
   - make
