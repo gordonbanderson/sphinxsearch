@@ -4,6 +4,18 @@ language: php
 sudo: required
 dist: trusty
 
+install:
+  - echo '**** INSTALL ****'
+  - echo ls -lh
+  - rm -rf *
+  - git clone https://github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_REPO_SLUG
+  - cd $TRAVIS_REPO_SLUG
+  - git checkout -qf $TRAVIS_COMMIT
+  - ls -lh
+  - cd ..
+  - ls -lh
+  - pwd
+
 env:
   global:
     - COMPOSER_ROOT_VERSION=4.0.x-dev
@@ -58,7 +70,7 @@ before_script:
 
   - ls -lh
   - pwd
-  
+
   # 14.04 package fails to start for Sphinx 2.3.2 beta, as such build from source :(
   - git clone https://github.com/sphinxsearch/sphinx.git build
   - cd build
