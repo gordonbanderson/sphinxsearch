@@ -23,8 +23,7 @@ before_script:
   - sudo apt-get -qq update
 
   # jq for composer.json manipulation, reset for sphinxsearch
-  - sudo apt-cache search libmysqlclient
-  - sudo apt-get install -y jq libmysqlclient20 libodbc1 libstdc++6 lsb-base
+  - sudo apt-get install -y jq libmysqlclient18
 
   #Double check OS version
   - cat /etc/issue
