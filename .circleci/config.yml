@@ -41,6 +41,7 @@ jobs:
 
       - run: pwd
       - run: ls -lh
+      - run: cat /etc/issue
       - run: apk add jq
       - run: cat composer.json | jq --arg minstability dev '. + {"minimum-stability":$minstability}' > composer.tmp && mv composer.tmp composer.json
       - run: composer validate
