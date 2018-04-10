@@ -34,6 +34,7 @@ before_script:
   - make
   - sudo make install
   - cd ..
+  - ls -lh
 
   #Double check OS version
   - cat /etc/issue
