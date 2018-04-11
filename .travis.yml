@@ -42,6 +42,7 @@ before_script:
   - whoami
   - sudo ls -lh /etc/
   - sudo ls -lh /etc/sphinxsearch
+  - sudo touch /etc/sphinxsearch/sphinx.conf
   - sudo chmod 777 /etc/sphinxsearch/sphinx.conf
 
 
