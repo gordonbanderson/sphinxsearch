@@ -285,5 +285,9 @@ class Indexer
         }
 
         file_put_contents($sphinxSavePath, $config);
+
+        error_log('---- saved config ----');
+        error _log($sphinxSavePath);
+        error_log($config);
     }
 }
