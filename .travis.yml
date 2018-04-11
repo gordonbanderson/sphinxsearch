@@ -36,14 +36,11 @@ before_script:
 
   # Try trusty version and see what is regressed
   - sudo apt-get update -y
-  - sudo apt-get -y install sphinxsearch
+  - sudo apt-get -y install wget
+  - cd /opt
+  - wget http://sphinxsearch.com/files/sphinx-3.0.3-facc3fb-linux-amd64.tar.gz
+  - tar zxvf sphinx-3.0.3-facc3fb-linux-amd64.tar.gz && mv sphinx-3.0.3 sphinxsearch && cd -
 
-  # Probably a better way of doing this
-  - whoami
-  - sudo ls -lh /etc/
-  - sudo ls -lh /etc/sphinxsearch
-  - sudo touch /etc/sphinxsearch/sphinx.conf
-  - sudo chmod 777 /etc/sphinxsearch/sphinx.conf
 
 
   # Init PHP
