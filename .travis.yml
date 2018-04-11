@@ -41,6 +41,7 @@ before_script:
   # Probably a better way of doing this
   - whoami
   - sudo ls -lh /etc/
+  - sudo ls -lh /etc/sphinxsearch
   - sudo chmod 777 /etc/sphinxsearch/sphinx.conf
 
 
