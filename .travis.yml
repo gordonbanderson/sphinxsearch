@@ -38,13 +38,18 @@ before_script:
 
   # 14.04 package fails to start for Sphinx 2.3.2 beta, as such build from source :(
   # And Travis does not do 16.04 either :(
-  - git clone https://github.com/sphinxsearch/sphinx.git build
-  - cd build
-  - ./configure
-  - make
-  - sudo make install
-  - cd ..
-  - rm -rf build
+  # - git clone https://github.com/sphinxsearch/sphinx.git build
+  # - cd build
+  # - ./configure
+  # - make
+  # - sudo make install
+  # - cd ..
+  # - rm -rf build
+
+  - apt-get update -y
+  - apt-get -y install wget libmysqlclient18 libodbc1 unixodbc libpq5
+  - wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
+  - dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
 
 script:
   - if [[ $PHPUNIT_TEST ]]; then find . | grep Sapphire && vendor/bin/phpunit tests/; fi
