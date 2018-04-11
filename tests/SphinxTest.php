@@ -27,7 +27,7 @@ use Suilven\SphinxSearch\Service\Searcher;
 
 class SphinxTest extends SapphireTest
 {
-    protected static $fixture_file = 'sphinxsearch/fixtures.yml';
+    protected static $fixture_file = 'fixtures.yml';
 
     const INDEX_NAME = 'photographs';
 
