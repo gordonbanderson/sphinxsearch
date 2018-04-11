@@ -39,7 +39,8 @@ before_script:
   - sudo apt-get -y install sphinxsearch
 
   # Probably a better way of doing this
-  - sudo ls -lh /etc/sphinsearch
+  - whoami
+  - sudo ls -lh /etc/
   - sudo chmod 777 /etc/sphinxsearch/sphinx.conf
 
 
