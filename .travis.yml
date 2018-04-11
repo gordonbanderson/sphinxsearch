@@ -36,6 +36,16 @@ before_script:
 
   - php vendor/silverstripe/framework/tests/dump_constants.php
 
+  # 14.04 package fails to start for Sphinx 2.3.2 beta, as such build from source :(
+  # And Travis does not do 16.04 either :(
+  - git clone https://github.com/sphinxsearch/sphinx.git build
+  - cd build
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
+  - rm -rf build
+
 script:
   - if [[ $PHPUNIT_TEST ]]; then find . | grep Sapphire && vendor/bin/phpunit tests/; fi
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml tests/; fi
