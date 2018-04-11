@@ -42,6 +42,7 @@ before_script:
   - sudo ls -lh /usr/sbin/policy-rc.d
   - sudo sed -i "s/^exit 101$/exit 0/" /usr/sbin/policy-rc.d
   - sudo echo 'exit 0' > /usr/sbin/invoke-rc.d
+  - sudo less /usr/sbin/policy-rc.d
   - sudo dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
 
 
