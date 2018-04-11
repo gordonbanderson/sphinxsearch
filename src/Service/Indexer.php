@@ -72,11 +72,7 @@ class Indexer
         foreach($this->indexes as $index)
         {
             $className = $index->getClass();
-            error_log("\n\n\n\n\n");
 
-            error_log('>>>> CLASSNAME: ' . $className);
-
-            error_log('INDEX: ' . print_r($index, 1));
 
             $name = $index->getName();
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
@@ -98,8 +94,6 @@ class Indexer
 
             $tokens = $index->getTokens();
 
-            error_log('FIELDS AND TOKENS: ' . print_r($fields, 1));
-
             /** @var DataList $query */
             $singleton = singleton($className);
             $tableName = $singleton->config()->get('table_name');
@@ -117,21 +111,12 @@ class Indexer
             /** @var $DataList $queryObject */
             $queryObject = Versioned::get_by_stage($className, Versioned::LIVE);
 
-
-            error_log('CLASS:' . get_class($queryObject));
-
-
-            error_log('QUERIED COLS FOR ' . $className . ': ' . print_r($fields, 1));
-
             // this is how to do it with a DataList, it clones and returns a new DataList
             $queryObject = $queryObject->setQueriedColumns($fields);
 
 
             // this needs massages for sphinx
             $sql = $queryObject->sql();
-
-            error_log('SQL INIT: ' . $sql);
-
 
             $classNameInHierarchy = $className;
 
@@ -148,15 +133,10 @@ class Indexer
                     $isSiteTree = true;
                 }
 
-                error_log('CN:' . $classNameInHierarchy);
                 $instance = new $classNameInHierarchy;
                 $classNameInHierarchy = get_parent_class($classNameInHierarchy);
             }
 
-            error_log('JOIN CLASSES: ' . print_r($joinClasses, 1));
-
-
-            // error_log('SQL T1 ' . $sql);
 
             $sql = str_replace('"', '`', $sql);
 
@@ -173,19 +153,9 @@ class Indexer
             $commas = str_repeat('?, ', sizeof($joinClasses));
             $commas = substr( $commas, 0, -2 );
             $columns = implode(', ', $joinClasses);
-            error_log('COMMAS: ' . $commas);
             $sql = str_replace('WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas. '))',
                 "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
                 $sql);
-           // $sql = str_replace('WHERE (`SiteTree`.`ClassName` IN (?, ?))', "WHERE (`SiteTree`.`ClassName` IN ('{$joinClasses[0]}', '{$joinClasses[1]}'))", $sql);
-
-
-            error_log('--------------------');
-            error_log($sql);
-            error_log($commas);
-            error_log($columns);
-            error_log('/--------------------');
-
 
 
             $sqlArray = explode(PHP_EOL, $sql);
@@ -201,7 +171,6 @@ class Indexer
             {
                 if (isset($specs[$field])) {
                     $fieldType = $specs[$field];
-                    error_log('FT:' . $field . ' --> ' . $fieldType);
                     switch($fieldType) {
                         case 'DBDatetime':
                             $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
@@ -277,7 +246,6 @@ class Indexer
                 'Attributes' => $attributes,
             ]);
 
-            error_log('INDEXER PARAMS:' . print_r($params, 1));
 
             $configuraton = $params->renderWith('IndexClassConfig');
 
@@ -317,7 +285,5 @@ class Indexer
         }
 
         file_put_contents($sphinxSavePath, $config);
-
-        error_log('CONFIG SAVED: ' . $config);
     }
 }

@@ -54,10 +54,8 @@ class Client
     {
         $reindexCommand = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'cmd_reindex');
 
-        // @todo Fix, config not working here
-        //$reindexCommand = '/usr/bin/indexer --rotate --all';
-
-        error_log('reindex command ' . $reindexCommand);
+        // @todo remove error logs
+        error_log('> Running reindexer');
         error_log(exec($reindexCommand));
     }
 }
