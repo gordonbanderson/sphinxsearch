@@ -38,7 +38,7 @@ before_script:
   - sudo wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
 
   # Avoid error with package not starting first up
-  - sed -i "s/^exit 101$/exit 0/" /usr/sbin/policy-rc.d
+  - sudo sed -i "s/^exit 101$/exit 0/" /usr/sbin/policy-rc.d
   - sudo dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
 
 
