@@ -38,6 +38,9 @@ before_script:
   - sudo apt-get update -y
   - sudo apt-get -y install sphinxsearch
 
+  # Probably a better way of doing this
+  - sudo chmod 777 /etc/sphinxsearch/sphinx.conf
+
 
   # Init PHP
   - phpenv rehash
