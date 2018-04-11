@@ -39,9 +39,7 @@ before_script:
   - sudo apt-get -y install wget
   - cd /opt
   - wget http://sphinxsearch.com/files/sphinx-3.0.3-facc3fb-linux-amd64.tar.gz
-  - tar zxvf sphinx-3.0.3-facc3fb-linux-amd64.tar.gz && mv sphinx-3.0.3 sphinxsearch && cd -
-
-
+  - tar zxvf sphinx-3.0.3-facc3fb-linux-amd64.tar.gz && mv sphinx-3.0.3 sphinxsearch && ls -lh && cd -
 
   # Init PHP
   - phpenv rehash
