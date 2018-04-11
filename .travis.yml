@@ -22,19 +22,6 @@ matrix:
       env: DB=MYSQL INSTALLER_VERSION=4.x-dev PHPUNIT_TEST=1
 
 before_script:
-  # Init PHP
-  - phpenv rehash
-  - phpenv config-rm xdebug.ini
-
-  # Install composer dependencies
-  - composer validate
-  - echo $INSTALLER_VERSION
-  - composer require --prefer-source --no-update silverstripe/recipe-cms:1.1.x-dev
-  - if [[ $DB == PGSQL ]]; then composer require --no-update silverstripe/postgresql:2.0.x-dev; fi
-  - composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
-  - vendor/bin/sake flush=all
-
-  - php vendor/silverstripe/framework/tests/dump_constants.php
 
   # 14.04 package fails to start for Sphinx 2.3.2 beta, as such build from source :(
   # And Travis does not do 16.04 either :(
@@ -49,7 +36,27 @@ before_script:
   - sudo apt-get update -y
   - sudo apt-get -y install wget libmysqlclient18 libodbc1 unixodbc libpq5
   - sudo wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
+
+  # Avoid error with package not starting first up
+  - sed -i "s/^exit 101$/exit 0/" /usr/sbin/policy-rc.d
   - sudo dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
+
+
+  # Init PHP
+  - phpenv rehash
+  - phpenv config-rm xdebug.ini
+
+  # Install composer dependencies
+  - composer validate
+  - echo $INSTALLER_VERSION
+  - composer require --prefer-source --no-update silverstripe/recipe-cms:1.1.x-dev
+  - if [[ $DB == PGSQL ]]; then composer require --no-update silverstripe/postgresql:2.0.x-dev; fi
+  - composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
+  - vendor/bin/sake flush=all
+
+  - php vendor/silverstripe/framework/tests/dump_constants.php
+
+
 
 script:
   - if [[ $PHPUNIT_TEST ]]; then find . | grep Sapphire && vendor/bin/phpunit tests/; fi
