@@ -46,10 +46,10 @@ before_script:
   # - cd ..
   # - rm -rf build
 
-  - apt-get update -y
-  - apt-get -y install wget libmysqlclient18 libodbc1 unixodbc libpq5
-  - wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
-  - dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
+  - sudo apt-get update -y
+  - sudo apt-get -y install wget libmysqlclient18 libodbc1 unixodbc libpq5
+  - sudo wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
+  - sudo dpkg -i sphinxsearch_2.3.2-beta-1~trusty_amd64.deb
 
 script:
   - if [[ $PHPUNIT_TEST ]]; then find . | grep Sapphire && vendor/bin/phpunit tests/; fi
