@@ -44,6 +44,7 @@ jobs:
       - run: cat /etc/issue
       - run: apt-get update && apt-get install -y wget libmysqlclient18 libodbc1 libpq5
       - run: wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~jessie_amd64.deb && dpkg -i sphinxsearch_2.3.2-beta-1~jessie_amd64.deb && rm sphinxsearch_2.3.2-beta-1~jessie_amd64.deb
+      - run: service sphinxsearch start
       - run: composer validate
       - run: composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
       - run: composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
