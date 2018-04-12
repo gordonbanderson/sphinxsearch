@@ -48,7 +48,7 @@ jobs:
       - run: composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
       - run: composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
-      #- run: find /
+      - run: find / | grep sphinx
 
       - save_cache:
           paths:
