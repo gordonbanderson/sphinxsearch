@@ -66,15 +66,15 @@ class SphinxTest extends SapphireTest
 
         $database = DB::get_conn()->getSelectedDatabase();
         $databaseHost = DB::get_conn()->getDatabaseServer();
-        error_log(print_r(DB::get_conn(), 1));
 
         error_log('TEMP DB: ' . print_r($database, 1));
         error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
 
 
         error_log('SHOW TABLES');
-        error_log(exec("mysql --host=127.0.0.1 -pubuntu       {$database} -e 'show tables';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu       circle_test -e 'show tables';"));
         //error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
+        error_log('less .env');
 
 
         // save config
