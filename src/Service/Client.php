@@ -57,5 +57,7 @@ class Client
         // @todo remove error logs
         error_log('> Running reindexer');
         error_log(exec($reindexCommand));
+        error_log(exec('ls -lh /var/lib/sphinxsearch/data'));
+        error_log(exec('whoami'));
     }
 }
