@@ -48,7 +48,7 @@ jobs:
       - run: composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
       - run: composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
-      - run: find /
+      #- run: find /
 
       - save_cache:
           paths:
@@ -56,4 +56,5 @@ jobs:
           key: v1-dependencies-{{ checksum "composer.json" }}
 
       # run tests!
-      - run: vendor/bin/phpunit -d memory_limit=512M
+      - run: pwd && ls -lh
+      - run: vendor/bin/phpunit -d memory_limit=512M tests
