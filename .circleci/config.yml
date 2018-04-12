@@ -41,8 +41,9 @@ jobs:
 
       - run: pwd
       - run: ls -lh
-      - run: wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~xenial_amd64.deb && dpkg -i sphinxsearch_2.3.2-beta-1~xenial_amd64.deb && rm sphinxsearch_2.3.2-beta-1~xenial_amd64.deb
       - run: cat /etc/issue
+      - run: apt-get install -y wget
+      - run: wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~xenial_amd64.deb && dpkg -i sphinxsearch_2.3.2-beta-1~xenial_amd64.deb && rm sphinxsearch_2.3.2-beta-1~xenial_amd64.deb
       - run: composer validate
       - run: composer require --prefer-dist --no-update silverstripe/recipe-cms:1.1.x-dev
       - run: composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
