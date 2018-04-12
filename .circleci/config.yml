@@ -42,7 +42,7 @@ jobs:
       - run: pwd
       - run: ls -lh
       - run: cat /etc/issue
-      - run: apt-get update && apt-get install -y wget libmysqlclient18 libodbc1 libpq5
+      - run: apt-get update && apt-get install -y wget libmysqlclient18 libodbc1 libpq5 mysql-client
       - run: wget http://sphinxsearch.com/files/sphinxsearch_2.3.2-beta-1~jessie_amd64.deb && dpkg -i sphinxsearch_2.3.2-beta-1~jessie_amd64.deb && rm sphinxsearch_2.3.2-beta-1~jessie_amd64.deb
       - run: service sphinxsearch start
       - run: composer validate
