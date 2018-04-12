@@ -62,20 +62,6 @@ class SphinxTest extends SapphireTest
 
         Config::inst()->update('Suilven\FreeTextSearch\Indexes', 'indexes', $indexes);
 
-        $cf = Config::inst()->get('Suilven\FreeTextSearch\Indexes', 'indexes');
-
-        $all = Config::inst()->getAll();
-        error_log('CF: ' . print_r($cf, 1));
-
-        // seems to be using the default
-
-        error_log('IS DEV? ' . Director::isDev());
-        error_log('IS TEST? ' . Director::isTest());
-
-
-        // override index definitions for testing
-       // Config::inst()->nest();
-
 
 
         $database = DB::get_conn()->getSelectedDatabase();
