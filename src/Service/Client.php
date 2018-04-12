@@ -59,5 +59,7 @@ class Client
         error_log(exec($reindexCommand));
         error_log(exec('ls -lh /var/lib/sphinxsearch/data'));
         error_log(exec('whoami'));
+
+        error_log(exec('/usr/bin/indexer --all'));
     }
 }
