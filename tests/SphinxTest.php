@@ -71,7 +71,9 @@ class SphinxTest extends SapphireTest
         error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
 
 
-        error_log(exec("mysql --host={$database} -pubuntu -e 'show tables';"));
+        error_log('SHOW TABLES');
+        error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
+        //error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
 
 
         // save config
