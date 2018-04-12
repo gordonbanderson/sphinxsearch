@@ -73,7 +73,7 @@ class SphinxTest extends SapphireTest
 
 
         error_log('SHOW TABLES');
-        error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu       {$database} -e 'show tables';"));
         //error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
 
 
