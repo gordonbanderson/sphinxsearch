@@ -70,6 +70,10 @@ class SphinxTest extends SapphireTest
         error_log('TEMP DB: ' . print_r($database, 1));
         error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
 
+
+        error_log(exec("mysql --host={$database} -pubuntu -e 'show tables';"));
+
+
         // save config
         $indexesService = new Indexes();
         $indexesObj = $indexesService->getIndexes();
