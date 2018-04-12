@@ -9,13 +9,13 @@ Suilven\SphinxSearch\Service\Client:
 
   #This must be writable
   #Debian
-  config_file: '/opt/sphinxsearch/etc/sphinxsearch.conf'
+  config_file: '/etc/sphinxsearch/sphinx.conf'
 
   #Compiled docker
   #config_path: '/usr/local/etc/sphinx.conf'
 
   #The command to reindex, if empty use inotify to trigger instead
-  cmd_reindex: 'sudo /opt/sphinxsearch/bin/indexer --rotate --all'
+  cmd_reindex: 'sudo /usr/bin/indexer --rotate --all'
 
   #Note that the webserver user needs to be able to do this
   cmd _restart: 'sudo service sphinxsearch restart'
