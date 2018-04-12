@@ -66,7 +66,7 @@ class SphinxTest extends SapphireTest
 
         $database = DB::get_conn()->getSelectedDatabase();
         $databaseHost = DB::get_conn()->getDatabaseServer();
-        error_log(print_r(DB::get_conn()));
+        error_log(print_r(DB::get_conn(), 1));
 
         error_log('TEMP DB: ' . print_r($database, 1));
         error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
