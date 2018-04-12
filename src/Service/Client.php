@@ -55,14 +55,15 @@ class Client
         $reindexCommand = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'cmd_reindex');
 
         // @todo remove error logs
-        error_log('> Running reindexer');
-        error_log(exec($reindexCommand));
+        error_log('> Running reindexer, command is ' . $reindexCommand);
         error_log(exec('ls -lh /var/lib/sphinxsearch/data'));
         error_log(exec('whoami'));
 
         error_log(exec('/usr/bin/indexer --all'));
         error_log('After indexing');
         error_log(exec('ls -lh /var/lib/sphinxsearch/data'));
+        error_log(exec('cat /etc/sphinxsearch/sphinx.conf'));
+        error_log(exec("mysql --host=127.0.01 --port=9306 -e 'show tables';"));
 
     }
 }
