@@ -36,7 +36,7 @@ index {$IndexName}_index
 
 	# index files path and file name, without extension
 	# mandatory, path must be writable, extensions will be auto-appended
-	path			= /usr/local/sphinx/data/{$IndexName}
+	path			= /var/lib/sphinxsearch/data/{$IndexName}
 
 	# document attribute values (docinfo) storage mode
 	# optional, default is 'extern'
@@ -84,7 +84,7 @@ index {$IndexName}_rt
 
 	# index files path and file name, without extension
 	# mandatory, path must be writable, extensions will be auto-appended
-	path			= /usr/local/sphinx/data/{$IndexName}_rt
+	path			= /var/lib/sphinxsearch/data/{$IndexName}_rt
 
 	# RAM chunk size limit
 	# RT index will keep at most this much data in RAM, then flush to disk
