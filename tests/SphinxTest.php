@@ -71,13 +71,23 @@ class SphinxTest extends SapphireTest
         error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
 
 
-        error_log('SHOW TABLES AND PHOTOS - circle test, ss_tmp, ss_tmp');
+        error_log('SHOW TABLES, circle test, ss_tmp');
         error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'show tables;';"));
         error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'show tables;';"));
+
+        error_log('SHOW MODELS, circle test, ss_tmp')
         error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'select * from Model_Photo;';"));
         error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'select count(*) from Model_Photo;';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'select * from Model_Photo;';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'select count(*) from Model_Photo;';"));
         //error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
         error_log(exec('cat /var/www/.env'));
+
+
+        error_log('---- data from silverstripe perspective ----');
+        foreach(Photo::get() as $photo) {
+            error_log('FROM DB: ' . $photo->Title);
+        }
 
 
         // save config
@@ -94,12 +104,6 @@ class SphinxTest extends SapphireTest
 
     public function test_search()
     {
-
-        foreach(Photo::get() as $photo) {
-            error_log('FROM DB: ' . $photo->Title);
-        }
-
-
         $searcher = new Searcher();
         $searcher->setIndex(self::INDEX_NAME);
         $results = $searcher->search('Central Bangkok');
