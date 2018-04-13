@@ -72,9 +72,10 @@ class SphinxTest extends SapphireTest
 
 
         error_log('SHOW TABLES');
-        error_log(exec("mysql --host=127.0.0.1 -pubuntu       circle_test -e 'show tables';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'show tables';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'show tables';"));
         //error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
-        error_log(exec('cat .env'));
+        error_log(exec('cat /var/www/.env'));
 
 
         // save config
@@ -87,7 +88,6 @@ class SphinxTest extends SapphireTest
         // perhaps should be Server instead of Client
         $client = new Client();
         $client->reindex();
-
     }
 
     public function test_search()
