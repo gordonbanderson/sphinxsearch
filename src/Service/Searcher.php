@@ -90,9 +90,6 @@ class Searcher
 
     public function search($q)
     {
-        error_log('SIZE: ' . $this->pageSize);
-        error_log('PAGE: ' . $this->page);
-
         $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();
 
@@ -214,8 +211,6 @@ class Searcher
                     break;
                 }
             }
-
-            error_log('CLASS: ' . $clazz);
 
             $dataobject = DataObject::get_by_id($clazz, $assoc['id']);
 

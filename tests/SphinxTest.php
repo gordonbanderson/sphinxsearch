@@ -27,7 +27,7 @@ use Suilven\SphinxSearch\Service\Searcher;
 
 class SphinxTest extends SapphireTest
 {
-    protected static $fixture_file = 'sphinxsearch/fixtures.yml';
+    protected static $fixture_file = 'fixtures.yml';
 
     const INDEX_NAME = 'photographs';
 
@@ -62,20 +62,6 @@ class SphinxTest extends SapphireTest
 
         Config::inst()->update('Suilven\FreeTextSearch\Indexes', 'indexes', $indexes);
 
-        $cf = Config::inst()->get('Suilven\FreeTextSearch\Indexes', 'indexes');
-
-        $all = Config::inst()->getAll();
-        error_log('CF: ' . print_r($cf, 1));
-
-        // seems to be using the default
-
-        error_log('IS DEV? ' . Director::isDev());
-        error_log('IS TEST? ' . Director::isTest());
-
-
-        // override index definitions for testing
-       // Config::inst()->nest();
-
 
 
         $database = DB::get_conn()->getSelectedDatabase();
@@ -83,6 +69,26 @@ class SphinxTest extends SapphireTest
 
         error_log('TEMP DB: ' . print_r($database, 1));
         error_log('TEMP DB HOST: ' . print_r($databaseHost, 1));
+
+
+        error_log('SHOW TABLES, circle test, ss_tmp');
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'show tables;';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'show tables;';"));
+
+        error_log('SHOW MODELS, circle test, ss_tmp');
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'select * from Model_Photo;';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'select count(*) from Model_Photo;';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'select * from Model_Photo;';"));
+        error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'select count(*) from Model_Photo;';"));
+        //error_log(exec("mysql --host={$databaseHost} -pubuntu       {$database} -e 'show tables';"));
+        error_log(exec('cat /var/www/.env'));
+
+
+        error_log('---- data from silverstripe perspective ----');
+        foreach(Photo::get() as $photo) {
+            error_log('FROM DB: ' . $photo->Title);
+        }
+
 
         // save config
         $indexesService = new Indexes();
@@ -94,17 +100,10 @@ class SphinxTest extends SapphireTest
         // perhaps should be Server instead of Client
         $client = new Client();
         $client->reindex();
-
     }
 
     public function test_search()
     {
-
-        foreach(Photo::get() as $photo) {
-            error_log('FROM DB: ' . $photo->Title);
-        }
-
-
         $searcher = new Searcher();
         $searcher->setIndex(self::INDEX_NAME);
         $results = $searcher->search('Central Bangkok');
