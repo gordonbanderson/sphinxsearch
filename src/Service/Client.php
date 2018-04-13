@@ -64,6 +64,7 @@ class Client
         error_log(exec('cat /etc/sphinxsearch/sphinx.conf'));
         error_log('---- sphinx tables after indexer run ----');
         error_log(exec("mysql --host=127.0.01 --port=9306 -e 'show tables';"));
-        error_log(print_r(exec('service sphinxsearch restart && sleep 2'), 1));
+        error_log(print_r(exec('service sphinxsearch restart && sleep 20'), 1));
+        error_log('--- did that sleep 20 seconds? ---');
     }
 }
