@@ -75,7 +75,7 @@ class SphinxTest extends SapphireTest
         error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'show tables;';"));
         error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'show tables;';"));
 
-        error_log('SHOW MODELS, circle test, ss_tmp')
+        error_log('SHOW MODELS, circle test, ss_tmp');
         error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'select * from Model_Photo;';"));
         error_log(exec("mysql --host=127.0.0.1 -pubuntu {$database} -e 'select count(*) from Model_Photo;';"));
         error_log(exec("mysql --host=127.0.0.1 -pubuntu circle_test -e 'select * from Model_Photo;';"));
