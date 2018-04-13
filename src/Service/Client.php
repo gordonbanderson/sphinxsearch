@@ -58,11 +58,11 @@ class Client
         error_log('> Running reindexer, command is ' . $reindexCommand);
         error_log(exec('ls -lh /var/lib/sphinxsearch/data'));
         error_log(exec('whoami'));
-
-        error_log(exec('/usr/bin/indexer --verbose --all'));
+        error_log(exec('/usr/bin/indexer --config /etc/sphinxsearch/sphinx.conf --verbose --all'));
         error_log('After indexing');
         error_log(exec('ls -lh /var/lib/sphinxsearch/data'));
         error_log(exec('cat /etc/sphinxsearch/sphinx.conf'));
+        error_log('---- sphinx tables after indexer run ----');
         error_log(exec("mysql --host=127.0.01 --port=9306 -e 'show tables';"));
 
     }
