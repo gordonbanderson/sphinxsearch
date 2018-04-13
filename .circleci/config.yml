@@ -55,6 +55,7 @@ jobs:
             - ./vendor
           key: v1-dependencies-{{ checksum "composer.json" }}
 
-      # run tests!
-      - run: pwd && ls -lh
-      - run: vendor/bin/phpunit -d memory_limit=512M tests
+      # run test,upload coverage
+      - run: phpdbg -qrr vendor/bin/phpunit -d memory_limit=512M --coverage-clover=coverage.xml tests
+      - run: bash <(curl -s https://codecov.io/bash) -f coverage.xml
+
