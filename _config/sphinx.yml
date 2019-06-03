@@ -8,7 +8,7 @@ Suilven\SphinxSearch\Service\Client:
   port: 9306
 
   #This must be writable
-  #Debian
+  #Debian path
   config_file: '/etc/sphinxsearch/sphinx.conf'
 
   #Compiled docker
@@ -18,4 +18,4 @@ Suilven\SphinxSearch\Service\Client:
   cmd_reindex: '/usr/bin/indexer --verbose --rotate --all'
 
   #Note that the webserver user needs to be able to do this
-  cmd _restart: 'sservice sphinxsearch restart'
+  cmd _restart: 'service sphinxsearch restart'
