@@ -67,6 +67,9 @@ class Indexer
     {
         $allConfigs = [];
 
+        // MySQLPDODatabase , PostgreSQLDatabase
+        $database = Environment::getEnv('SS_DATABASE_CLASS');
+
 
         /** @var Index $index */
         foreach($this->indexes as $index)
@@ -78,7 +81,7 @@ class Indexer
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
 
 
-            // these are stored in the db but not part of free text search, a bit like tokens I guess
+            // these are stored in the db but not part of free text search
             $attributes = new ArrayList();
 
             // @todo different field types
@@ -114,13 +117,14 @@ class Indexer
             // this is how to do it with a DataList, it clones and returns a new DataList
             $queryObject = $queryObject->setQueriedColumns($fields);
 
-
             // this needs massages for sphinx
             $sql = $queryObject->sql();
 
+            error_log($sql);
+            echo $database;
+            die;
+
             $classNameInHierarchy = $className;
-
-
             $joinClasses = [];
 
             // need to know for the stage, dataobjects assumed flat
@@ -226,15 +230,7 @@ class Indexer
                 } else {
                     user_error("The field {$field} does not exist for class {$className}");
                 }
-
-                //
             }
-
-            /**
-             * to add
-             * 	sql_attr_string		= classname
-             */
-
 
             $params = new ArrayData([
                'IndexName' => $name,
@@ -247,10 +243,22 @@ class Indexer
             ]);
 
 
+            $configuration = null;
+
+            // configs are different for each of MySQL and PostgreSQL
+            switch($database) {
+                case 'MySQLPDODatabase':
+                    $configuraton = $params->renderWith('MySQLIndexClassConfig');
+                    break;
+
+                case 'PostgreSQLDatabase':
+                    $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
+                    break;
+            }
+
             $configuraton = $params->renderWith('IndexClassConfig');
 
-
-
+            // this avoids issues with escaping and quotation marks
             $configuration2 = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
 
             // @todo generic naming
@@ -286,8 +294,9 @@ class Indexer
 
         file_put_contents($sphinxSavePath, $config);
 
+        error_log($config);
+
         error_log('---- saved config ----');
         error_log($sphinxSavePath);
-        error_log($config);
     }
 }
