@@ -70,6 +70,11 @@ class Indexer
         // MySQLPDODatabase , PostgreSQLDatabase
         $database = Environment::getEnv('SS_DATABASE_CLASS');
 
+        // @todo Check on these values for other connectors
+        $isMySQL = $database == 'MySQLPDODatabase';
+        $isPostgresSQL = $database == 'PostgreSQLDatabase';
+
+
 
         /** @var Index $index */
         foreach($this->indexes as $index)
@@ -120,14 +125,12 @@ class Indexer
             // this needs massages for sphinx
             $sql = $queryObject->sql();
 
-            error_log($sql);
-            echo $database;
-            die;
+            error_log('T1: ' . $sql);
 
             $classNameInHierarchy = $className;
             $joinClasses = [];
 
-            // need to know for the stage, dataobjects assumed flat
+            // need to know for the stage, dataobjects assumed flat (@todo This is most probably an incorrect assertion)
             $isSiteTree = false;
             while($classNameInHierarchy != 'SilverStripe\ORM\DataObject')
             {
@@ -137,27 +140,75 @@ class Indexer
                     $isSiteTree = true;
                 }
 
-                $instance = new $classNameInHierarchy;
                 $classNameInHierarchy = get_parent_class($classNameInHierarchy);
             }
 
-
-            $sql = str_replace('"', '`', $sql);
-
-            // need to move ID to first param
-            if ($isSiteTree) {
-                $sql = str_replace("`{$tableName}_Live`.`ID`, ", '', $sql);
-                $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}_Live`.`ID`, ", $sql);
-            } else {
-                $sql = str_replace("`{$tableName}`.`ID`, ", '', $sql);
-                $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
+            // replace double quotes with backticks for MySQL
+            if ($isMySQL) {
+                $sql = str_replace('"', '`', $sql);
+                // need to move ID to first param
+                if ($isSiteTree) {
+                    $sql = str_replace("`{$tableName}_Live`.`ID`, ", '', $sql);
+                    $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}_Live`.`ID`, ", $sql);
+                } else {
+                    $sql = str_replace("`{$tableName}`.`ID`, ", '', $sql);
+                    $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
+                }
             }
+
+            if ($isPostgresSQL) {
+                error_log('**** IS PG ****');
+
+                /** @var string $quote  Single double quote character to get aroun escaping issues*/
+                $quote = '"';
+
+                // need to move ID to first param
+                if ($isSiteTree) {
+                    error_log('>>>> PG1');
+                    $selectorForID = $quote . $tableName . '_Live' . $quote . '.' . $quote . 'ID' . $quote;
+                    error_log('SFID: ' . $selectorForID);
+                    error_log('>>>> PG2, sql = ' . $sql);
+
+                    $pattern = '/' . $selectorForID . '/';
+                    $replacement = '';
+                    $sql = preg_replace($pattern, $replacement, $sql);
+
+                   // $sql = str_replace($selectorForID, ", '', $sql);
+                    error_log('TRACE 1:' . $sql);
+                    error_log('>>>> PG3');
+
+
+                    $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.'  . $quote . 'ID' . $quote . ',';
+                    //$sql = str_replace('SELECT DISTINCT', $selectorForID, ", $sql);
+                    $sql = preg_replace('/SELECT DISTINCT/', ' ', $sql);
+                    $sql = $prefix . $sql;
+                    error_log('TRACE 2:' . $sql);
+
+                    // remove potential double commas due to moving of the ID field in the query
+                    $sql = str_replace(', ,', ',', $sql);
+
+                } else {
+                    // @todo test these
+                    $sql = str_replace($quote . $tableName . $quote . '.' . $quote . 'ID' . $quote, ", $sql);
+                    $sql = str_replace('SELECT DISTINCT', 'SELECT DISTINCT ' . $quote . $tableName . '.' .
+                        $quote .'ID' . $quote, ", $sql);
+                }
+            }
+
+            // query is correct up to here for the sitetree case
+            error_log('TRACE 3:' . $sql);
+
 
 
             $commas = str_repeat('?, ', sizeof($joinClasses));
             $commas = substr( $commas, 0, -2 );
             $columns = implode(', ', $joinClasses);
-            $sql = str_replace('WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas. '))',
+            error_log(print_r($columns, 1));
+            die;
+
+
+            $sql = str_replace(
+            'WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas. '))',
                 "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
                 $sql);
 
@@ -255,8 +306,6 @@ class Indexer
                     $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
                     break;
             }
-
-            $configuraton = $params->renderWith('IndexClassConfig');
 
             // this avoids issues with escaping and quotation marks
             $configuration2 = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
