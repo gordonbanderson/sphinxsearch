@@ -199,10 +199,9 @@ class Indexer
                     error_log('SFID: ' . $selectorForID);
                     $sql = preg_replace('/' . $selectorForID . '/', '', $sql);
 
-                    error_log('SQL: removing thing ppppppppppppppppppppppppppppp ID');
 
-                    $sql = str_replace('SELECT DISTINCT', 'SELECT DISTINCT ' . $quote . $tableName . '.' .
-                        $quote .'ID' . $quote, ", $sql);
+                    $replace = 'SELECT DISTINCT ' . $quote . $tableName . '.' . $quote . 'ID' . $quote;
+                    $sql = preg_replace('/SELECT DISTINCT/', $replace, $sql);
                 }
             }
 
