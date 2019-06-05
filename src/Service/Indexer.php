@@ -9,14 +9,12 @@
 namespace Suilven\SphinxSearch\Service;
 
 
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
-use SilverStripe\ORM\DataQuery;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
 use Suilven\FreeTextSearch\Index;
@@ -74,12 +72,18 @@ class Indexer
         $isMySQL = $database == 'MySQLPDODatabase';
         $isPostgresSQL = $database == 'PostgreSQLDatabase';
 
+        if (!$isMySQL && !$isPostgresSQL) {
+            user_error('The database used must be one of MySQL or Postgres');
+        }
+
 
 
         /** @var Index $index */
         foreach($this->indexes as $index)
         {
             $className = $index->getClass();
+
+            error_log("\n\n---- Index for " . $className . '----');
 
 
             $name = $index->getName();
@@ -143,7 +147,7 @@ class Indexer
                 $classNameInHierarchy = get_parent_class($classNameInHierarchy);
             }
 
-            // replace double quotes with backticks for MySQL
+            // replacement double quotes with backticks for MySQL
             if ($isMySQL) {
                 $sql = str_replace('"', '`', $sql);
                 // need to move ID to first param
@@ -201,16 +205,29 @@ class Indexer
 
 
             $commas = str_repeat('?, ', sizeof($joinClasses));
-            $commas = substr( $commas, 0, -2 );
+            $commas = substr( $commas, 0, -2 ); // why?  DataObject?
             $columns = implode(', ', $joinClasses);
-            error_log(print_r($columns, 1));
-            die;
+            error_log('COMMAS: ' . $commas);
+            error_log('COLUMNS = ' . $columns);
 
 
-            $sql = str_replace(
-            'WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas. '))',
-                "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
-                $sql);
+            if ($isMySQL) {
+                $sql = str_replace(
+                    'WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas . '))',
+                    "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
+                    $sql);
+            } elseif ($isPostgresSQL) {
+                // WHERE ("SiteTree_Live"."ClassName" IN (?))
+                $commas = str_replace('?', '\?', $commas);
+                $search = '/WHERE ("SiteTree_Live"\."ClassName" IN (' . $commas . '))/';
+                //$search = '/WHERE ("SiteTree_Live"\."ClassName" IN (\?, \?))/';
+                error_log('SEARCH: ' . $search);
+                $replacement = 'WHERE ("SiteTree_Live"."ClassName44444444444444444444" IN ( ' . $columns . '))';
+                $sql = preg_replace($search, $replacement, $sql);
+            }
+
+            error_log('TRACE 4:' . $sql);
+
 
 
             $sqlArray = explode(PHP_EOL, $sql);
