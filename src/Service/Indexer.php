@@ -178,7 +178,7 @@ class Indexer
                     $sql = preg_replace($pattern, $replacement, $sql);
 
                    // $sql = str_replace($selectorForID, ", '', $sql);
-                    error_log('TRACE 1:' . $sql);
+                    error_log('TRACE 1 [moving ID to first param]:' . $sql);
                     error_log('>>>> PG3');
 
 
@@ -186,21 +186,29 @@ class Indexer
                     //$sql = str_replace('SELECT DISTINCT', $selectorForID, ", $sql);
                     $sql = preg_replace('/SELECT DISTINCT/', ' ', $sql);
                     $sql = $prefix . $sql;
-                    error_log('TRACE 2:' . $sql);
+                    error_log('TRACE 2 [id move to front of query]:' . $sql);
 
                     // remove potential double commas due to moving of the ID field in the query
                     $sql = str_replace(', ,', ',', $sql);
 
                 } else {
-                    // @todo test these
-                    $sql = str_replace($quote . $tableName . $quote . '.' . $quote . 'ID' . $quote, ", $sql);
+                    // @todo retest these
+                    error_log('******* ID TO FRONT FOR DataObject *******');
+                    error_log('SQL [pre mangling]' . $sql);
+                    $selectorForID = $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote;
+                    error_log('SFID: ' . $selectorForID);
+                    $sql = preg_replace('/' . $selectorForID . '/', '', $sql);
+
+                    error_log('SQL: removing thing ppppppppppppppppppppppppppppp ID');
+
                     $sql = str_replace('SELECT DISTINCT', 'SELECT DISTINCT ' . $quote . $tableName . '.' .
                         $quote .'ID' . $quote, ", $sql);
                 }
             }
 
             // query is correct up to here for the sitetree case
-            error_log('TRACE 3:' . $sql);
+            error_log('======== CHECK COMMENTS ======');
+            error_log('TRACE 3 [id should be at front, postgres and mysql]:' . $sql);
 
 
 
@@ -219,14 +227,14 @@ class Indexer
             } elseif ($isPostgresSQL) {
                 // WHERE ("SiteTree_Live"."ClassName" IN (?))
                 $commas = str_replace('?', '\?', $commas);
-                $search = '/WHERE ("SiteTree_Live"\."ClassName" IN (' . $commas . '))/';
+                $selectorForId = '/WHERE ("SiteTree_Live"\."ClassName" IN (' . $commas . '))/';
                 //$search = '/WHERE ("SiteTree_Live"\."ClassName" IN (\?, \?))/';
-                error_log('SEARCH: ' . $search);
+                error_log('SEARCH: ' . $selectorForId);
                 $replacement = 'WHERE ("SiteTree_Live"."ClassName44444444444444444444" IN ( ' . $columns . '))';
-                $sql = preg_replace($search, $replacement, $sql);
+                $sql = preg_replace($selectorForId, $replacement, $sql);
             }
 
-            error_log('TRACE 4:' . $sql);
+            error_log('TRACE 4 [addition of classnames]:' . $sql);
 
 
 
