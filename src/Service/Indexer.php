@@ -192,16 +192,15 @@ class Indexer
                     $sql = str_replace(', ,', ',', $sql);
 
                 } else {
-                    // @todo retest these
-                    error_log('******* ID TO FRONT FOR DataObject *******');
-                    error_log('SQL [pre mangling]' . $sql);
+                    // move ID clause to the front for non SiteTree, PostgreSQL
                     $selectorForID = $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote;
-                    error_log('SFID: ' . $selectorForID);
                     $sql = preg_replace('/' . $selectorForID . '/', '', $sql);
 
 
-                    $replace = 'SELECT DISTINCT ' . $quote . $tableName . '.' . $quote . 'ID' . $quote;
+                    $replace = 'SELECT DISTINCT ' . $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote .',';
                     $sql = preg_replace('/SELECT DISTINCT/', $replace, $sql);
+
+                    $sql = preg_replace('/, ,/', ',', $sql);
                 }
             }
 
