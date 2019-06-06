@@ -169,21 +169,21 @@ class Indexer
                 // need to move ID to first param
                 if ($isSiteTree) {
                     error_log('>>>> PG1');
-                    $selectorForID = $quote .  'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
-                    error_log('SFID: ' . $selectorForID);
+                    $selectorForId = $quote .  'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
+                    error_log('SFID: ' . $selectorForId);
                     error_log('>>>> PG2, sql = ' . $sql);
 
-                    $pattern = '/' . $selectorForID . '/';
+                    $pattern = '/' . $selectorForId . '/';
                     // we wish only to replace the first one as this search term can also appear in the join clause
                     $sql = preg_replace($pattern, '', $sql, 1);
 
-                   // $sql = str_replace($selectorForID, ", '', $sql);
+                   // $sql = str_replace($selectorForId, ", '', $sql);
                     error_log('TRACE 1 [moving ID to first param]:' . $sql);
                     error_log('>>>> PG3');
 
 
                     $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.'  . $quote . 'ID' . $quote . ',';
-                    //$sql = str_replace('SELECT DISTINCT', $selectorForID, ", $sql);
+                    //$sql = str_replace('SELECT DISTINCT', $selectorForId, ", $sql);
 
 
                     $sql = preg_replace('/SELECT DISTINCT/', '', $sql);
@@ -195,8 +195,8 @@ class Indexer
 
                 } else {
                     // move ID clause to the front for non SiteTree, PostgreSQL
-                    $selectorForID = $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote;
-                    $sql = preg_replace('/' . $selectorForID . '/', '', $sql);
+                    $selectorForId = $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote;
+                    $sql = preg_replace('/' . $selectorForId . '/', '', $sql);
 
 
                     $replace = 'SELECT DISTINCT ' . $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote .',';
@@ -212,10 +212,22 @@ class Indexer
 
 
 
-            $commas = str_repeat('?, ', sizeof($joinClasses));
-            $commas = substr( $commas, 0, -2 ); // why?  DataObject?
+            error_log(print_r($joinClasses, 1));
+
+            $nq = max(1, sizeof($joinClasses) - 1);
+
+            error_log('NQ: ' . $nq);
+
+            // the -1 here is to avoid indexing the base class, be it DataObject or Page
+            $commas = str_repeat('?, ', $nq );
+
+            // this removes trailing ', '
+            $commas = substr( $commas, 0, -2 );
+
+            error_log('T1: ' . $commas);
             $columns = implode(', ', $joinClasses);
             error_log('COMMAS: ' . $commas);
+            error_log('T2: ' . $commas);
             error_log('COLUMNS = ' . $columns);
 
 
@@ -225,12 +237,18 @@ class Indexer
                     "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
                     $sql);
             } elseif ($isPostgresSQL) {
-                error_log('SQL BEFORE ADDING CLASSES:' . $sql);
+                error_log("+++++++++++++++++++++++++++\n\n\n\n" . 'SQL BEFORE ADDING CLASSES:' . $sql);
                 $commas = str_replace('?', '\?', $commas);
-                $selectorForId = '/WHERE ("SiteTree_Live"\."ClassName" IN (' . $commas . '))/';
+                $selectorForId = '/WHERE ("SiteTree_Live"."ClassName" IN (' . $commas . '))/';
                 //$search = '/WHERE ("SiteTree_Live"\."ClassName" IN (\?, \?))/';
-                error_log('SEARCH: ' . $selectorForId);
                 $replacement = 'WHERE ("SiteTree_Live"."ClassName" IN ( ' . $columns . '))';
+
+                // testing
+                $selectorForId = '/WHERE \("SiteTree_Live"."ClassName" IN \(\?\)\)/';
+\
+                error_log('>> SELECTOR: ' . $selectorForId);
+                error_log('>> REPLACEMENT: ' . $replacement);
+                error_log('>> SQL: ' . $sql);
                 $sql = preg_replace($selectorForId, $replacement, $sql);
             }
 
