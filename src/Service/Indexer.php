@@ -169,13 +169,13 @@ class Indexer
                 // need to move ID to first param
                 if ($isSiteTree) {
                     error_log('>>>> PG1');
-                    $selectorForID = $quote . $tableName . '_Live' . $quote . '.' . $quote . 'ID' . $quote;
+                    $selectorForID = $quote .  'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
                     error_log('SFID: ' . $selectorForID);
                     error_log('>>>> PG2, sql = ' . $sql);
 
                     $pattern = '/' . $selectorForID . '/';
-                    $replacement = '';
-                    $sql = preg_replace($pattern, $replacement, $sql);
+                    // we wish only to replace the first one as this search term can also appear in the join clause
+                    $sql = preg_replace($pattern, '', $sql, 1);
 
                    // $sql = str_replace($selectorForID, ", '', $sql);
                     error_log('TRACE 1 [moving ID to first param]:' . $sql);
@@ -184,7 +184,9 @@ class Indexer
 
                     $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.'  . $quote . 'ID' . $quote . ',';
                     //$sql = str_replace('SELECT DISTINCT', $selectorForID, ", $sql);
-                    $sql = preg_replace('/SELECT DISTINCT/', ' ', $sql);
+
+
+                    $sql = preg_replace('/SELECT DISTINCT/', '', $sql);
                     $sql = $prefix . $sql;
                     error_log('TRACE 2 [id move to front of query]:' . $sql);
 
@@ -223,12 +225,12 @@ class Indexer
                     "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
                     $sql);
             } elseif ($isPostgresSQL) {
-                // WHERE ("SiteTree_Live"."ClassName" IN (?))
+                error_log('SQL BEFORE ADDING CLASSES:' . $sql);
                 $commas = str_replace('?', '\?', $commas);
                 $selectorForId = '/WHERE ("SiteTree_Live"\."ClassName" IN (' . $commas . '))/';
                 //$search = '/WHERE ("SiteTree_Live"\."ClassName" IN (\?, \?))/';
                 error_log('SEARCH: ' . $selectorForId);
-                $replacement = 'WHERE ("SiteTree_Live"."ClassName44444444444444444444" IN ( ' . $columns . '))';
+                $replacement = 'WHERE ("SiteTree_Live"."ClassName" IN ( ' . $columns . '))';
                 $sql = preg_replace($selectorForId, $replacement, $sql);
             }
 
