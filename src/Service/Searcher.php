@@ -8,11 +8,10 @@
 
 namespace Suilven\SphinxSearch\Service;
 
-
-use Foolz\SphinxQL\Drivers\Pdo\ResultSet;
+use Foolz\SphinxQL\Drivers\Pdo\Connection;
 use Foolz\SphinxQL\Facet;
-use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\PaginatedList;
@@ -94,7 +93,27 @@ class Searcher
         $connection = $this->client->getConnection();
 
         // @todo make fields configurable?
-        $query = SphinxQL::create($connection)->select('id')
+
+        /**
+         * // create a SphinxQL Connection object to use with SphinxQL
+        $conn = new Connection();
+        $conn->setParams(array('host' => 'domain.tld', 'port' => 9306));
+
+        $query = (new SphinxQL($conn))->select('column_one', 'colume_two')
+        ->from('index_ancient', 'index_main', 'index_delta')
+        ->match('comment', 'my opinion is superior to yours')
+        ->where('banned', '=', 1);
+
+        $result = $query->execute();
+         */
+
+        $conn = new Connection();
+        $host = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'host');
+        $port = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
+
+        $conn->setParams(array('host' => $host, 'port' => $port));
+
+        $query = (new SphinxQL($connection))->select('id')
             ->from([$this->index .'_index', $this->index  . '_rt']);
 
         if (!empty($q)) {
@@ -119,10 +138,8 @@ class Searcher
         }
 
         foreach($this->facettedTokens as $tokenToFacet) {
-            $query->facet(Facet::create($connection)
-                ->facet(array($tokenToFacet))
-                // @todo->orderBy('iso', 'ASC')
-            );
+            $facet = (new Facet($connection))->facet(array($tokenToFacet));
+            $query->facet($facet);
         }
 
 
@@ -177,7 +194,7 @@ class Searcher
             }
             $ctr++;
 
-            // @todo huyman readable title
+            // @todo human readable title
             $facets[] = ['Name' => $token, 'Facets' => new ArrayList($tokenFacets)];
         }
 
