@@ -10,6 +10,7 @@ namespace Suilven\SphinxSearch\Service;
 
 use Foolz\SphinxQL\Drivers\Pdo\Connection;
 use Foolz\SphinxQL\Facet;
+use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\ArrayList;
@@ -94,24 +95,11 @@ class Searcher
 
         // @todo make fields configurable?
 
-        /**
-         * // create a SphinxQL Connection object to use with SphinxQL
-        $conn = new Connection();
-        $conn->setParams(array('host' => 'domain.tld', 'port' => 9306));
 
-        $query = (new SphinxQL($conn))->select('column_one', 'colume_two')
-        ->from('index_ancient', 'index_main', 'index_delta')
-        ->match('comment', 'my opinion is superior to yours')
-        ->where('banned', '=', 1);
 
-        $result = $query->execute();
-         */
-
-        $conn = new Connection();
-        $host = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'host');
-        $port = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
-
-        $conn->setParams(array('host' => $host, 'port' => $port));
+       // $conn = new Connection();
+       // $host = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'host');
+       // $port = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
 
         $query = (new SphinxQL($connection))->select('id')
             ->from([$this->index .'_index', $this->index  . '_rt']);
@@ -198,7 +186,21 @@ class Searcher
             $facets[] = ['Name' => $token, 'Facets' => new ArrayList($tokenFacets)];
         }
 
-        $metaQuery = SphinxQL::create($connection)->query('SHOW META;');
+        /**
+         * // create a SphinxQL Connection object to use with SphinxQL
+        $conn = new Connection();
+        $conn->setParams(array('host' => 'domain.tld', 'port' => 9306));
+
+        $query = (new SphinxQL($conn))->select('column_one', 'colume_two')
+        ->from('index_ancient', 'index_main', 'index_delta')
+        ->match('comment', 'my opinion is superior to yours')
+        ->where('banned', '=', 1);
+
+        $result = $query->execute();
+         */
+
+        $sphinxql = new SphinxQL($connection);
+        $metaQuery = $sphinxql->query('SHOW META;');
         $metaData = $metaQuery->execute();
 
         $searchInfo = [];
@@ -233,26 +235,26 @@ class Searcher
 
             // Get highlight snippets, but only if a query parameter was passed in
             if (!empty($q)) {
-                $snippets = Helper::create($connection)->callSnippets(
+                //(new Helper($conn))-
+                $snippets = (new Helper($connection))->callSnippets(
                 // @todo get from index, need all text fields
+                    // @todo make part of index configuration
                     $dataobject->Title . ' ' . $dataobject->Content,
                     //@todo hardwired
                     'sitetree_index',
                     $q,
                     [
+                        // @todo Make configurable
                         'around' => 10,
                         'limit' => 200,
-                        'before_match' => '<b>',
-                        'after_match' => '</b>',
-                        'chunk_separator' => '...',
+                        'before_match' => '<span class="highlight">',
+                        'after_match' => '</span>',
+                        'chunk_separator' => ' ... ',
                         'html_strip_mode' => 'strip',
                     ]
                 )->execute()->getStored();
                 $dataobject->Snippets = $snippets[0]['snippet'];
             }
-
-
-
 
             $formattedResult = new ArrayData([
                 'Record' => $dataobject

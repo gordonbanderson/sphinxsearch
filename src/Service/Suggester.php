@@ -49,14 +49,16 @@ class Suggester
             $connection = $this->client->getConnection();
             $e = $this->client->escapeSphinxQL($q);
             $indexName = $this->index . '_index';
-            $query = SphinxQL::create($connection)->query("CALL QSUGGEST('$e', '{$indexName}')");
+            $sphinxql = new SphinxQL($connection);
+            $query = $sphinxql->query("CALL QSUGGEST('$e', '{$indexName}')");
             $result = $query->execute()
-                ->getStored();
+                ->getAffectedRows();
 
            // @todo FIX Can we return multiple results and also can we pass in multiple words
             // result returns a string then a couple of numbers, no idea what the numbers are
-            $suggestions = $result[0]['suggest'];
-
+            if ($result !== 0 && sizeof($result) > 0) {
+                $suggestions = $result[0]['suggest'];
+            }
         }
 
         return [$suggestions];
