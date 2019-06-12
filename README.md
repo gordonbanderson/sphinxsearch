@@ -7,10 +7,84 @@
 [![Quality Score][ico-code-quality]][link-code-quality]
 [![Total Downloads][ico-downloads]][link-downloads]
 
-**Note:** Replace ```Gordon Anderson``` ```gordonbanderson``` ```https://github.com/gordonbanderson``` ```gordon.b.anderson@gmail.com``` ```suilven``` ```sphinxsearch``` ```Search SilverStripe using Sphinx``` with their correct values in [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [CONTRIBUTING.md](CONTRIBUTING.md), [LICENSE.md](LICENSE.md) and [composer.json](composer.json) files, then delete this line. You can run `$ php prefill.php` in the command line to make all replacements at once. Delete the file prefill.php as well.
 
 This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what
 PSRs you support to avoid any confusion with users and contributors.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Notes
+## Attaching
+Use `docker exec -it <id> bash`.  Note that the terminal behaves a little oddly but it works.
+
+## Indexing
+```indexer --all```
+Possibly a rotate in there also
+
+## Restarting
+This is not possible as it would kill the docker container
+
+
+## Config Tweaks
+WARNING: key 'mva_updates_pool' was permanently removed from configuration. Refer to documentation for details.
+WARNING: key 'docinfo' was permanently removed from configuration. Refer to documentation for details.
+WARNING: key 'mlock' is deprecated in /etc/sphinxsearch/sphinx.conf line 430; use 'mlock in particular access_... option' instead.
+WARNING: key 'charset_type' was permanently removed from configuration. Refer to documentation for details.
+WARNING: key 'enable_star' was permanently removed from configuration. Refer to documentation for details.
+
+
+#TODO
+* Postgres / MySQL, avoid hardwiring
+
+
+untweaked query
+
+SELECT DISTINCT "SiteTree_Live"."ClassName", "SiteTree_Live"."LastEdited", "SiteTree_Live"."Created", "SiteTree_Live"."Title", "SiteTree_Live"."MenuTitle", "SiteTree_Live"."Content", "SiteTree_Live"."Sort", "SiteTree_Live"."ParentID", "SiteTree_Live"."ID", 
+			CASE WHEN "SiteTree_Live"."ClassName" IS NOT NULL THEN "SiteTree_Live"."ClassName"
+			ELSE  E'SilverStripe\\CMS\\Model\\SiteTree' END AS "RecordClassName"
+ FROM "SiteTree_Live"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Structure
 
