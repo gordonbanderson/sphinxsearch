@@ -39,11 +39,6 @@ index {$IndexName}_index
 	# mandatory, path must be writable, extensions will be auto-appended
 	path			= /var/lib/manticore/data/{$IndexName}
 
-	# document attribute values (docinfo) storage mode
-	# optional, default is 'extern'
-	# known values are 'none', 'extern' and 'inline'
-	docinfo			= extern
-
 	# dictionary type, 'crc' or 'keywords'
 	# crc is faster to index when no substring/wildcards searches are needed
 	# crc with substrings might be faster to search but is much slower to index
@@ -53,20 +48,14 @@ index {$IndexName}_index
 	# optional, default is 'keywords'
 	dict			= keywords
 
-	# memory locking for cached data (.spa and .spi), to prevent swapping
-	# optional, default is 0 (do not mlock)
-	# requires searchd to be run from root
-	mlock			= 0
-
 	# See http://manticore.com/docs/current/conf-morphology.html for alternative languages
 	morphology		= stem_en
 
-#This enables suggest CALL QSUGGEST('cyclin','flickr_index');
-#See also https://docs.manticoresearch.com/latest/html/sphinxql_reference/call_qsuggest_syntax.html
-min_word_len = 3
-charset_type = utf-8
-enable_star = 1
-min_infix_len=2
+    #This enables suggest CALL QSUGGEST('cyclin','flickr_index');
+    #See also https://docs.manticoresearch.com/latest/html/sphinxql_reference/call_qsuggest_syntax.html
+    min_word_len = 3
+
+    min_infix_len=2
 
     html_strip = 1
 }
@@ -116,7 +105,5 @@ index {$IndexName}_rt
 
     dict=keywords
     min_word_len = 3
-    charset_type = utf-8
-    enable_star = 1
     min_infix_len=2
 }

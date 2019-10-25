@@ -21,6 +21,28 @@ PSRs you support to avoid any confusion with users and contributors.
 
 
 
+mysql> select *, weight() from aucc_sitetree_index where match('Lubbe');
++------+------------+---------+----------+----------+
+| id   | lastedited | created | parentid | weight() |
++------+------------+---------+----------+----------+
+|   13 |       2019 |    2019 |        9 |     1780 |
+|   17 |       2019 |    2019 |        9 |     1730 |
+|   16 |       2019 |    2019 |        9 |     1701 |
++------+------------+---------+----------+----------+
+3 rows in set (0.00 sec)
+
+mysql> select *, weight() from aucc_sitetree_index where match('Willem');
++------+------------+---------+----------+----------+
+| id   | lastedited | created | parentid | weight() |
++------+------------+---------+----------+----------+
+|   16 |       2019 |    2019 |        9 |     1676 |
+|   17 |       2019 |    2019 |        9 |     1676 |
++------+------------+---------+----------+----------+
+2 rows in set (0.00 sec)
+
+mysql> 
+
+
 
 
 
@@ -30,6 +52,11 @@ PSRs you support to avoid any confusion with users and contributors.
 # Notes
 ## Attaching
 Use `docker exec -it <id> bash`.  Note that the terminal behaves a little oddly but it works.
+
+
+sudo docker-compose exec manticore /bin/bash
+
+^^ this only works if all containers started at the same time
 
 ## Indexing
 ```indexer --all```
@@ -41,10 +68,9 @@ This is not possible as it would kill the docker container
 
 ## Config Tweaks
 WARNING: key 'mva_updates_pool' was permanently removed from configuration. Refer to documentation for details.
-WARNING: key 'docinfo' was permanently removed from configuration. Refer to documentation for details.
-WARNING: key 'mlock' is deprecated in /etc/sphinxsearch/sphinx.conf line 430; use 'mlock in particular access_... option' instead.
-WARNING: key 'charset_type' was permanently removed from configuration. Refer to documentation for details.
-WARNING: key 'enable_star' was permanently removed from configuration. Refer to documentation for details.
+
+#MySQL
+mysql --host=manticore --port=9306
 
 
 #TODO

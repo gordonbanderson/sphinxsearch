@@ -77,6 +77,8 @@ class Indexer
         }
 
 
+        $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
+
 
         /** @var Index $index */
         foreach($this->indexes as $index)
@@ -327,7 +329,7 @@ class Indexer
             }
 
             $params = new ArrayData([
-               'IndexName' => $name,
+               'IndexName' => $sphinxSiteID . '_' . $name,
                'SQL' => 'SQL_QUERY_HERE',
                 'DB_HOST' => !empty($this->databaseHost) ? $this->databaseHost : Environment::getEnv('SS_DATABASE_SERVER'),
                 'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
@@ -354,7 +356,7 @@ class Indexer
             $configuration2 = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
 
             // @todo generic naming
-            $allConfigs[$name] = "{$configuration2}";
+            $allConfigs[$sphinxSiteID . '_' . $name] = "{$configuration2}";
         }
         return $allConfigs;
     }
@@ -365,28 +367,54 @@ class Indexer
      */
     public function saveConfig()
     {
-        // specific to the runnnig of sphinx
+        // This is based on the Docker version of the manticore config, with additional indexes for each site
+        // in spearate files under /path/to/config/sites , and then included
+        $prefix = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+            . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'prefix.conf');
         $common = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'common.conf');
         $indexer = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'indexer.conf');
         $searchd = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'searchd.conf');
-
+        $suffix = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+            . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'suffix.conf');
 
         // specific to silverstripe data
         $sphinxConfigurations = $this->generateConfig();
+
+
+        error_log(print_r($sphinxConfigurations, 1));
+
         $sphinxSavePath = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'config_file');
+        $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
 
-        $config = $common . $indexer . $searchd;
+        $config = $prefix . $common . $indexer . $searchd . $suffix;
 
-        foreach(array_keys($sphinxConfigurations) as $filename) {
-            $config .= $sphinxConfigurations[$filename];
-        }
+        error_log($sphinxSavePath);
+
+       // exec('find /etc/');
+        echo '---------------';
+        #exec('ls -lh /etc/sphinxsearch', $output);
+        exec('whoami', $output);
+        print_r($output);
+        echo '';
 
         file_put_contents($sphinxSavePath, $config);
 
-        error_log($config);
+        $siteConfig = '';
+        foreach(array_keys($sphinxConfigurations) as $filename) {
+            error_log('FN:' . $filename);
+            $siteConfig .= $sphinxConfigurations[$filename];
+        }
+
+        $siteConfigPath = dirname($sphinxSavePath) . DIRECTORY_SEPARATOR . 'sites' . DIRECTORY_SEPARATOR .
+            $sphinxSiteID  . '.conf';
+echo $siteConfigPath;
+        file_put_contents($siteConfigPath, $siteConfig);
+
+        // @todo Fix permissions on docker config path for manticore
+
 
         error_log('---- saved config ----');
         error_log($sphinxSavePath);

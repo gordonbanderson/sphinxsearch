@@ -7,12 +7,13 @@ Suilven\SphinxSearch\Service\Client:
   host: '127.0.0.1'
   port: 9306
 
+  # Configs for each site are held at <config dir>/<site_id>.conf to allow multiple sites to use the same sphinx server.
+  # A suitable convention would be likes of example.com having a site id of exampledotcom
+  site_id: your_site_id
+
   #This must be writable
   #Debian path
   config_file: '/etc/sphinxsearch/sphinx.conf'
-
-  #Compiled docker
-  #config_path: '/usr/local/etc/sphinx.conf'
 
   #The command to reindex, if empty use inotify to trigger instead
   cmd_reindex: '/usr/bin/indexer --verbose --rotate --all'

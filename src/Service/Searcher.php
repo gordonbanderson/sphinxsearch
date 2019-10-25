@@ -90,10 +90,13 @@ class Searcher
 
     public function search($q)
     {
+        $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
+
         $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();
 
         // @todo make fields configurable?
+        $siteIndex = $sphinxSiteID . '_' . $this->index;
 
 
 
@@ -102,7 +105,7 @@ class Searcher
        // $port = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
 
         $query = (new SphinxQL($connection))->select('id')
-            ->from([$this->index .'_index', $this->index  . '_rt']);
+            ->from([$siteIndex .'_index', $siteIndex  . '_rt']);
 
         if (!empty($q)) {
             $query->match('?', $q);
@@ -224,8 +227,9 @@ class Searcher
             // @todo fix this, return an associative array from the above
             foreach($indexes as $indexObj)
             {
-                $name = $indexObj->getName();
-                if ($name == $this->index) {
+                $name = $sphinxSiteID . '_' . $indexObj->getName();
+                echo $name;
+                if ($name == $siteIndex) {
                     $clazz = $indexObj->getClass();
                     break;
                 }
@@ -241,7 +245,7 @@ class Searcher
                     // @todo make part of index configuration
                     $dataobject->Title . ' ' . $dataobject->Content,
                     //@todo hardwired
-                    'sitetree_index',
+                    $sphinxSiteID . '_sitetree_index',
                     $q,
                     [
                         // @todo Make configurable
