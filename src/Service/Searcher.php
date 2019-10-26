@@ -228,7 +228,6 @@ class Searcher
             foreach($indexes as $indexObj)
             {
                 $name = $sphinxSiteID . '_' . $indexObj->getName();
-                echo $name;
                 if ($name == $siteIndex) {
                     $clazz = $indexObj->getClass();
                     break;

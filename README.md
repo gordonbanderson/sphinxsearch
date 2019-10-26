@@ -53,6 +53,12 @@ mysql>
 ## Attaching
 Use `docker exec -it <id> bash`.  Note that the terminal behaves a little oddly but it works.
 
+## Creating config files
+sudo vendor/bin/sake dev/tasks/sphinxconfig
+
+^^^^ gets around file permission issues
+
+
 
 sudo docker-compose exec manticore /bin/bash
 

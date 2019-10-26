@@ -13,6 +13,7 @@ use Foolz\SphinxQL\Drivers\Pdo\ResultSet;
 use Foolz\SphinxQL\Facet;
 use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\PaginatedList;
@@ -46,9 +47,11 @@ class Suggester
         $suggestions = [];
 
         if (!empty($q)) {
+            $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
+
             $connection = $this->client->getConnection();
             $e = $this->client->escapeSphinxQL($q);
-            $indexName = $this->index . '_index';
+            $indexName = $sphinxSiteID . '_' . $this->index . '_index';
             $sphinxql = new SphinxQL($connection);
             $query = $sphinxql->query("CALL QSUGGEST('$e', '{$indexName}')");
             $result = $query->execute()

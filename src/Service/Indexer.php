@@ -388,8 +388,9 @@ class Indexer
 
         $sphinxSavePath = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'config_file');
         $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
+        $sphinxSiteIDTMP = $sphinxSiteID . '.tmp';
 
-        $config = $prefix . $common . $indexer . $searchd . $suffix;
+        $config = $prefix . $common . $indexer . $searchd;
 
         error_log($sphinxSavePath);
 
@@ -400,7 +401,6 @@ class Indexer
         print_r($output);
         echo '';
 
-        file_put_contents($sphinxSavePath, $config);
 
         $siteConfig = '';
         foreach(array_keys($sphinxConfigurations) as $filename) {
@@ -408,15 +408,28 @@ class Indexer
             $siteConfig .= $sphinxConfigurations[$filename];
         }
 
-        $siteConfigPath = dirname($sphinxSavePath) . DIRECTORY_SEPARATOR . 'sites' . DIRECTORY_SEPARATOR .
+        $sitesDir = dirname($sphinxSavePath) . DIRECTORY_SEPARATOR . 'sites' . DIRECTORY_SEPARATOR;
+        $siteConfigPath = $sitesDir .
             $sphinxSiteID  . '.conf';
 echo $siteConfigPath;
         file_put_contents($siteConfigPath, $siteConfig);
+
+        //file_put_contents($sphinxSiteIDTMP, $config);
+
+
+        $filelist = glob($sitesDir . "*.conf");
+        print_r($filelist);
+        foreach($filelist as $file) {
+            $contents = file_get_contents($file);
+            $config .= "\n\n\n\n\n" . $contents;
+        }
 
         // @todo Fix permissions on docker config path for manticore
 
 
         error_log('---- saved config ----');
         error_log($sphinxSavePath);
+
+        file_put_contents($sphinxSavePath, $config);
     }
 }
