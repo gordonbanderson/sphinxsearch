@@ -96,14 +96,8 @@ class Indexer
         /** @var Index $index */
         foreach ($this->indexes as $index) {
             $name = $index->getName();
-
-            list($sql, $configuraton) = $this->generateConfigForIndex($index);
-
-            // this avoids issues with escaping and quotation marks
-            $configurationSyntaxFixed = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
-
-            // @todo generic naming
-            $allConfigs[$sphinxSiteID . '_' . $name] = "{$configurationSyntaxFixed}";
+            $configuraton = $this->generateConfigForIndex($index);
+            $allConfigs[$sphinxSiteID . '_' . $name] = "{$configuraton}";
         }
         return $allConfigs;
     }
@@ -204,7 +198,7 @@ class Indexer
      * @param $database
      * @return array
      */
-    public function generateConfigForIndex(Index $index): array
+    public function generateConfigForIndex(Index $index)
     {
         $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
 
@@ -464,6 +458,9 @@ class Indexer
             $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
         }
 
-        return array($sql, $configuraton);
+        // this avoids issues with escaping and quotation marks
+        $configuration = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
+
+        return $configuration;
     }
 }
