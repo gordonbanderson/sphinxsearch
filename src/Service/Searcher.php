@@ -253,7 +253,7 @@ class Searcher
                 $snippets = (new Helper($connection))->callSnippets(
                 // @todo get from index, need all text fields
                     // @todo make part of index configuration
-                    $dataobject->Title . ' ' . $dataobject->Content,
+                    $dataobject->Title . ' ' . $dataobject->Content, // @todo this is incorrect for photos as 2 lines above
                     $sphinxSiteID . '_' . $this->index . '_index',
                     $q,
                     [
