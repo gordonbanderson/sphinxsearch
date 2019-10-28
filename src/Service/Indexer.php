@@ -95,7 +95,9 @@ class Indexer
 
         /** @var Index $index */
         foreach ($this->indexes as $index) {
-            list($name, $sql, $configuraton) = $this->generateConfigForIndex($index);
+            $name = $index->getName();
+
+            list($sql, $configuraton) = $this->generateConfigForIndex($index);
 
             // this avoids issues with escaping and quotation marks
             $configurationSyntaxFixed = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
@@ -210,7 +212,6 @@ class Indexer
 
         error_log("\n\n---- Index for " . $className . '----');
 
-        $name = $index->getName();
         $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
 
         // these are stored in the db but not part of free text search
@@ -445,7 +446,7 @@ class Indexer
         }
 
         $params = new ArrayData([
-            'IndexName' => $sphinxSiteID . '_' . $name,
+            'IndexName' => $sphinxSiteID . '_' . $index->getName(),
             'SQL' => 'SQL_QUERY_HERE',
             'DB_HOST' => !empty($this->databaseHost) ? $this->databaseHost : Environment::getEnv('SS_DATABASE_SERVER'),
             'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
@@ -463,6 +464,6 @@ class Indexer
             $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
         }
 
-        return array($name, $sql, $configuraton);
+        return array($sql, $configuraton);
     }
 }
