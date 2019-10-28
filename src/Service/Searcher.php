@@ -66,11 +66,14 @@ class Searcher
 
 
     /**
-     * @param array $facettedTokens
+     * @param array $facettedTokens an array of facet column names in lowercase
      */
     public function setFacettedTokens($facettedTokens)
     {
+        // @todo This appears to work for MVA, but IDs are returned
+        //array_push($facettedTokens, 'flickrtagid');
         $this->facettedTokens = $facettedTokens;
+
     }
 
 
@@ -98,15 +101,10 @@ class Searcher
         // @todo make fields configurable?
         $siteIndex = $sphinxSiteID . '_' . $this->index;
 
-
-
-       // $conn = new Connection();
-       // $host = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'host');
-       // $port = $config = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'port');
-
         $query = (new SphinxQL($connection))->select('id')
             ->from([$siteIndex .'_index', $siteIndex  . '_rt']);
 
+        // leaving $q empty searches for everything
         if (!empty($q)) {
             $query->match('?', $q);
         }
@@ -114,6 +112,11 @@ class Searcher
 
         // string int fixes needed here
         foreach($this->filters as $key => $value) {
+            // skip the flush parameter
+            if ($key == 'flush') {
+                continue;
+            }
+
             if ($key !== 'q') {
                 if (ctype_digit($value)) {
                     if (is_int($value + 0)) {
@@ -128,18 +131,24 @@ class Searcher
             }
         }
 
+
         foreach($this->facettedTokens as $tokenToFacet) {
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
             $query->facet($facet);
         }
 
 
-        $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
+        // testing
+       // $facet = (new Facet($connection))->facet('flickrtagid');
+      //  $query->facet($facet);
 
+
+        $query->limit(($this->page-1) * $this->pageSize, $this->pageSize);
 
         /** @var array $result */
         $result = $query->executeBatch()
             ->getStored();
+
 
         /** @var ResultSet $resultSet */
         $resultSet = $result[0];
@@ -238,13 +247,14 @@ class Searcher
 
             // Get highlight snippets, but only if a query parameter was passed in
             if (!empty($q)) {
+
+
                 //(new Helper($conn))-
                 $snippets = (new Helper($connection))->callSnippets(
                 // @todo get from index, need all text fields
                     // @todo make part of index configuration
                     $dataobject->Title . ' ' . $dataobject->Content,
-                    //@todo hardwired
-                    $sphinxSiteID . '_sitetree_index',
+                    $sphinxSiteID . '_' . $this->index . '_index',
                     $q,
                     [
                         // @todo Make configurable
