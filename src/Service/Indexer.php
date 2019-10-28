@@ -205,28 +205,12 @@ class Indexer
 
         error_log("\n\n---- Index for " . $className . '----');
 
-        $fields = [];
 
         // these are stored in the db but not part of free text search
         $attributes = new ArrayList();
 
-        // get a list of fields
-        foreach ($index->getFields() as $field) {
-            $fields[] = $field;
-        }
+        $fields = $this->getIndexFields($index);
 
-        // has one fields are essentially an attribute, e.g. has_one:Photographer would map to a field called PhotographerID
-        foreach ($index->getHasOneFields() as $field) {
-            $fields[] .= $field . 'ID';
-        }
-
-        // These are the facet headings from the config, camel case, e.g. Aperture, ShutterSpeed
-        $facetHeadings = $index->getTokens();
-
-        // add facet headings to fields
-        foreach ($facetHeadings as $token) {
-            $fields[] = $token;
-        }
 
 
         /** @var DataList $query */
@@ -407,6 +391,7 @@ class Indexer
                         break;
                 }
 
+
                 // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
                 if (in_array($field, $facetHeadings)) {
                     $fieldType = $specs[$field];
@@ -464,5 +449,36 @@ class Indexer
         $configuration = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
 
         return $configuration;
+    }
+
+    /**
+     * @param Index $index
+     * @return array
+     */
+    public function getIndexFields(Index $index)
+    {
+// ---- collate fields ----
+        $fields = [];
+
+        // ---- model fields ----
+        foreach ($index->getFields() as $field) {
+            $fields[] = $field;
+        }
+
+        // ---- has one, a special case of a model field ----
+        // has one fields are essentially an attribute, e.g. has_one:Photographer would map to a field called PhotographerID
+        foreach ($index->getHasOneFields() as $field) {
+            $fields[] .= $field . 'ID';
+        }
+
+        // ---- facet headings ----
+        // These are the facet headings from the config, camel case, e.g. Aperture, ShutterSpeed
+        $facetHeadings = $index->getTokens();
+
+        // add facet headings to fields
+        foreach ($facetHeadings as $token) {
+            $fields[] = $token;
+        }
+        return $fields;
     }
 }
