@@ -201,24 +201,29 @@ class Indexer
     public function generateConfigForIndex(Index $index)
     {
         $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
-
         $className = $index->getClass();
 
         error_log("\n\n---- Index for " . $className . '----');
 
-        $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
+        $fields = [];
 
         // these are stored in the db but not part of free text search
         $attributes = new ArrayList();
 
-        // @todo different field types
+        // get a list of fields
         foreach ($index->getFields() as $field) {
             $fields[] = $field;
         }
 
-        // These are the facet headings from the config, camel case
+        // has one fields are essentially an attribute, e.g. has_one:Photographer would map to a field called PhotographerID
+        foreach ($index->getHasOneFields() as $field) {
+            $fields[] .= $field . 'ID';
+        }
+
+        // These are the facet headings from the config, camel case, e.g. Aperture, ShutterSpeed
         $facetHeadings = $index->getTokens();
 
+        // add facet headings to fields
         foreach ($facetHeadings as $token) {
             $fields[] = $token;
         }
@@ -278,8 +283,6 @@ class Indexer
         }
 
         if ($this->databaseType == self::POSTGRESQL) {
-            error_log('**** IS PG ****');
-
             /** @var string $quote Single double quote character to get aroun escaping issues */
             $quote = '"';
 
@@ -386,7 +389,6 @@ class Indexer
                 switch ($fieldType) {
                     case 'DBDatetime':
                         $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
-                        // $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
                         $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
                         break;
                     case 'Datetime':
@@ -424,7 +426,7 @@ class Indexer
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_string']);
                             break;
                         case 'HTMLText':
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']); // @todo << is this correct?
                             break;
                         case 'Float':
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_float']);
