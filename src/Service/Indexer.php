@@ -95,278 +95,13 @@ class Indexer
 
         /** @var Index $index */
         foreach ($this->indexes as $index) {
-            $className = $index->getClass();
-
-            error_log("\n\n---- Index for " . $className . '----');
-
-
-            $name = $index->getName();
-            $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
-
-
-            // these are stored in the db but not part of free text search
-            $attributes = new ArrayList();
-
-            // @todo different field types
-            foreach ($index->getFields() as $field) {
-                $fields[] = $field;
-            }
-
-            foreach ($index->getTokens() as $token) {
-                $fields[] = $token;
-            }
-
-            // These are the facet headings from the config, camel case
-            $facetHeadings = $index->getTokens();
-
-            error_log('++++ TOKENS ++++');
-            error_log(print_r($facetHeadings, 1));
-
-
-            /** @var DataList $query */
-            $singleton = singleton($className);
-            $tableName = $singleton->config()->get('table_name');
-            $schema = $singleton->getSchema();
-
-            $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
-
-
-            // need to override sort, set it to null
-            Config::modify()->set($className, 'default_sort', null);
-
-            // @todo fix reference here
-            /** @var DataObject $queryObject */
-
-            /** @var $DataList $queryObject */
-            $queryObject = Versioned::get_by_stage($className, Versioned::LIVE);
-
-            // this is how to do it with a DataList, it clones and returns a new DataList
-            $queryObject = $queryObject->setQueriedColumns($fields);
-
-            // this needs massages for sphinx
-            $sql = $queryObject->sql();
-
-            error_log('T1: ' . $sql);
-
-            $classNameInHierarchy = $className;
-            $joinClasses = [];
-
-            // need to know for the stage, dataobjects assumed flat (@todo This is most probably an incorrect assertion)
-            $isSiteTree = false;
-            while ($classNameInHierarchy != 'SilverStripe\ORM\DataObject') {
-                if ($classNameInHierarchy != 'SilverStripe\CMS\Model\SiteTree') {
-                    $joinClasses[] = '\'' . str_replace('\\', '\\\\', $classNameInHierarchy) . '\'';
-                } else {
-                    $isSiteTree = true;
-                }
-
-                $classNameInHierarchy = get_parent_class($classNameInHierarchy);
-            }
-
-            // replacement double quotes with backticks for MySQL
-            if ($this->databaseType == self::MYSQL) {
-                $sql = str_replace('"', '`', $sql);
-                // need to move ID to first param
-                if ($isSiteTree) {
-                    $sql = str_replace("`{$tableName}_Live`.`ID`, ", '', $sql);
-                    $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}_Live`.`ID`, ", $sql);
-                } else {
-                    $sql = str_replace("`{$tableName}`.`ID`, ", '', $sql);
-                    $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
-                }
-            }
-
-            if ($this->databaseType == self::POSTGRESQL) {
-                error_log('**** IS PG ****');
-
-                /** @var string $quote Single double quote character to get aroun escaping issues */
-                $quote = '"';
-
-                // need to move ID to first param
-                if ($isSiteTree) {
-                    error_log('>>>> PG1');
-                    $selectorForId = $quote . 'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
-                    error_log('SFID: ' . $selectorForId);
-                    error_log('>>>> PG2, sql = ' . $sql);
-
-                    $pattern = '/' . $selectorForId . '/';
-                    // we wish only to replace the first one as this search term can also appear in the join clause
-                    $sql = preg_replace($pattern, '', $sql, 1);
-
-                    // $sql = str_replace($selectorForId, ", '', $sql);
-                    error_log('TRACE 1 [moving ID to first param]:' . $sql);
-                    error_log('>>>> PG3');
-
-
-                    $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.' . $quote . 'ID' . $quote . ',';
-                    //$sql = str_replace('SELECT DISTINCT', $selectorForId, ", $sql);
-
-
-                    $sql = preg_replace('/SELECT DISTINCT/', '', $sql);
-                    $sql = $prefix . $sql;
-                    error_log('TRACE 2 [id move to front of query]:' . $sql);
-
-                    // remove potential double commas due to moving of the ID field in the query
-                    $sql = str_replace(', ,', ',', $sql);
-
-                } else {
-                    // move ID clause to the front for non SiteTree, PostgreSQL
-                    $selectorForId = $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote;
-                    $sql = preg_replace('/' . $selectorForId . '/', '', $sql);
-
-
-                    $replace = 'SELECT DISTINCT ' . $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote . ',';
-                    $sql = preg_replace('/SELECT DISTINCT/', $replace, $sql);
-
-                    $sql = preg_replace('/, ,/', ',', $sql);
-                }
-            }
-
-            // query is correct up to here for the sitetree case
-            error_log('======== CHECK COMMENTS ======');
-            error_log('TRACE 3 [id should be at front, postgres and mysql]:' . $sql);
-
-
-            error_log(print_r($joinClasses, 1));
-
-            $nq = max(1, sizeof($joinClasses) - 1);
-
-            error_log('NQ: ' . $nq);
-
-            // the -1 here is to avoid indexing the base class, be it DataObject or Page
-            $commas = str_repeat('?, ', $nq);
-
-            // this removes trailing ', '
-            $commas = substr($commas, 0, -2);
-
-            error_log('T1: ' . $commas);
-            $columns = implode(', ', $joinClasses);
-            error_log('COMMAS: ' . $commas);
-            error_log('T2: ' . $commas);
-            error_log('COLUMNS = ' . $columns);
-
-
-            if ($this->databaseType == self::MYSQL) {
-                $sql = str_replace(
-                    'WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas . '))',
-                    "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
-                    $sql);
-            } elseif ($this->databaseType == self::POSTGRESQL) {
-                error_log("+++++++++++++++++++++++++++\n\n\n\n" . 'SQL BEFORE ADDING CLASSES:' . $sql);
-                $commas = str_replace('?', '\?', $commas);
-                $selectorForId = '/WHERE ("SiteTree_Live"."ClassName" IN (' . $commas . '))/';
-                //$search = '/WHERE ("SiteTree_Live"\."ClassName" IN (\?, \?))/';
-                $replacement = 'WHERE ("SiteTree_Live"."ClassName" IN ( ' . $columns . '))';
-
-                // testing
-                $selectorForId = '/WHERE \("SiteTree_Live"."ClassName" IN \(\?\)\)/';
-                \
-                    error_log('>> SELECTOR: ' . $selectorForId);
-                error_log('>> REPLACEMENT: ' . $replacement);
-                error_log('>> SQL: ' . $sql);
-                $sql = preg_replace($selectorForId, $replacement, $sql);
-            }
-
-            error_log('TRACE 4 [addition of classnames]:' . $sql);
-
-
-            $sqlArray = explode(PHP_EOL, $sql);
-            $sql = implode(' \\' . "\n", $sqlArray);
-
-            // loop through fields adding attribute or altering sql as needbe
-            $allFields = $fields;
-            $allFields[] = 'LastEdited';
-            $allFields[] = 'Created';
-
-            // make modifications to query and or attributes but only if required
-            foreach ($allFields as $field) {
-                if (isset($specs[$field])) {
-                    $fieldType = $specs[$field];
-                    switch ($fieldType) {
-                        case 'DBDatetime':
-                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
-                            // $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
-                            break;
-                        case 'Datetime':
-                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
-                            // this breaks order by if field is after: $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
-                            break;
-                        case 'Boolean':
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_bool']); // @todo informed guess
-                            break;
-                        case 'ForeignKey':
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
-                            break;
-                        default:
-                            // do nothing
-                            break;
-                    }
-
-                    // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
-                    if (in_array($field, $facetHeadings)) {
-                        $fieldType = $specs[$field];
-
-                        // remove string length from varchar
-                        if (substr($fieldType, 0, 7) === "Varchar") {
-                            $fieldTYpe = 'Varchar';
-                        }
-
-                        // NOTE, cannot filter on string attributes, see http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
-                        // OH, it seems to work :)
-                        switch ($fieldType) {
-                            case 'Int':
-                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
-                                break;
-                            case 'Varchar':
-                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_string']);
-                                break;
-                            case 'HTMLText':
-                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
-                                break;
-                            case 'Float':
-                                $attributes->push(['Name' => $field, 'Type' => 'sql_attr_float']);
-                                break;
-                            default:
-                                // do nothing
-                                break;
-                        }
-                    }
-                } else {
-                    user_error("The field {$field} does not exist for class {$className}");
-                }
-            }
-
-            $params = new ArrayData([
-                'IndexName' => $sphinxSiteID . '_' . $name,
-                'SQL' => 'SQL_QUERY_HERE',
-                'DB_HOST' => !empty($this->databaseHost) ? $this->databaseHost : Environment::getEnv('SS_DATABASE_SERVER'),
-                'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
-                'DB_PASSWD' => Environment::getEnv('SS_DATABASE_PASSWORD'),
-                'DB_NAME' => !empty($this->databaseName) ? $this->databaseName : Environment::getEnv('SS_DATABASE_NAME'),
-                'Attributes' => $attributes,
-            ]);
-
-
-            $configuration = null;
-
-            // configs are different for each of MySQL and PostgreSQL
-            switch ($database) {
-                case 'MySQLPDODatabase':
-                    $configuraton = $params->renderWith('MySQLIndexClassConfig');
-                    break;
-
-                case 'PostgreSQLDatabase':
-                    $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
-                    break;
-            }
+            list($name, $sql, $configuraton) = $this->generateConfigForIndex($index);
 
             // this avoids issues with escaping and quotation marks
-            $configuration2 = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
+            $configurationSyntaxFixed = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
 
             // @todo generic naming
-            $allConfigs[$sphinxSiteID . '_' . $name] = "{$configuration2}";
+            $allConfigs[$sphinxSiteID . '_' . $name] = "{$configurationSyntaxFixed}";
         }
         return $allConfigs;
     }
@@ -459,5 +194,275 @@ class Indexer
         error_log('---- saved config ----');
         error_log($sphinxSavePath);
 
+    }
+
+    /**
+     * @param Index $index
+     * @param $sphinxSiteID
+     * @param $database
+     * @return array
+     */
+    public function generateConfigForIndex(Index $index): array
+    {
+        $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
+
+        $className = $index->getClass();
+
+        error_log("\n\n---- Index for " . $className . '----');
+
+        $name = $index->getName();
+        $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
+
+        // these are stored in the db but not part of free text search
+        $attributes = new ArrayList();
+
+        // @todo different field types
+        foreach ($index->getFields() as $field) {
+            $fields[] = $field;
+        }
+
+        // These are the facet headings from the config, camel case
+        $facetHeadings = $index->getTokens();
+
+        foreach ($facetHeadings as $token) {
+            $fields[] = $token;
+        }
+
+
+        /** @var DataList $query */
+        $singleton = singleton($className);
+        $tableName = $singleton->config()->get('table_name');
+        $schema = $singleton->getSchema();
+
+        $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
+
+
+        // need to override sort, set it to null
+        Config::modify()->set($className, 'default_sort', null);
+
+        // @todo fix reference here
+        /** @var DataObject $queryObject */
+
+        /** @var $DataList $queryObject */
+        $queryObject = Versioned::get_by_stage($className, Versioned::LIVE);
+
+        // this is how to do it with a DataList, it clones and returns a new DataList
+        $queryObject = $queryObject->setQueriedColumns($fields);
+
+        // this needs massages for sphinx
+        $sql = $queryObject->sql();
+
+        error_log('T1: ' . $sql);
+
+        $classNameInHierarchy = $className;
+        $joinClasses = [];
+
+        // need to know for the stage, dataobjects assumed flat (@todo This is most probably an incorrect assertion)
+        $isSiteTree = false;
+        while ($classNameInHierarchy != 'SilverStripe\ORM\DataObject') {
+            if ($classNameInHierarchy != 'SilverStripe\CMS\Model\SiteTree') {
+                $joinClasses[] = '\'' . str_replace('\\', '\\\\', $classNameInHierarchy) . '\'';
+            } else {
+                $isSiteTree = true;
+            }
+
+            $classNameInHierarchy = get_parent_class($classNameInHierarchy);
+        }
+
+        // replacement double quotes with backticks for MySQL
+        if ($this->databaseType == self::MYSQL) {
+            $sql = str_replace('"', '`', $sql);
+            // need to move ID to first param
+            if ($isSiteTree) {
+                $sql = str_replace("`{$tableName}_Live`.`ID`, ", '', $sql);
+                $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}_Live`.`ID`, ", $sql);
+            } else {
+                $sql = str_replace("`{$tableName}`.`ID`, ", '', $sql);
+                $sql = str_replace('SELECT DISTINCT', "SELECT DISTINCT `{$tableName}`.`ID`, ", $sql);
+            }
+        }
+
+        if ($this->databaseType == self::POSTGRESQL) {
+            error_log('**** IS PG ****');
+
+            /** @var string $quote Single double quote character to get aroun escaping issues */
+            $quote = '"';
+
+            // need to move ID to first param
+            if ($isSiteTree) {
+                error_log('>>>> PG1');
+                $selectorForId = $quote . 'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
+                error_log('SFID: ' . $selectorForId);
+                error_log('>>>> PG2, sql = ' . $sql);
+
+                $pattern = '/' . $selectorForId . '/';
+                // we wish only to replace the first one as this search term can also appear in the join clause
+                $sql = preg_replace($pattern, '', $sql, 1);
+
+                // $sql = str_replace($selectorForId, ", '', $sql);
+                error_log('TRACE 1 [moving ID to first param]:' . $sql);
+                error_log('>>>> PG3');
+
+
+                $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.' . $quote . 'ID' . $quote . ',';
+                //$sql = str_replace('SELECT DISTINCT', $selectorForId, ", $sql);
+
+
+                $sql = preg_replace('/SELECT DISTINCT/', '', $sql);
+                $sql = $prefix . $sql;
+                error_log('TRACE 2 [id move to front of query]:' . $sql);
+
+                // remove potential double commas due to moving of the ID field in the query
+                $sql = str_replace(', ,', ',', $sql);
+
+            } else {
+                // move ID clause to the front for non SiteTree, PostgreSQL
+                $selectorForId = $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote;
+                $sql = preg_replace('/' . $selectorForId . '/', '', $sql);
+
+
+                $replace = 'SELECT DISTINCT ' . $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote . ',';
+                $sql = preg_replace('/SELECT DISTINCT/', $replace, $sql);
+
+                $sql = preg_replace('/, ,/', ',', $sql);
+            }
+        }
+
+        // query is correct up to here for the sitetree case
+        error_log('======== CHECK COMMENTS ======');
+        error_log('TRACE 3 [id should be at front, postgres and mysql]:' . $sql);
+
+
+        error_log(print_r($joinClasses, 1));
+
+        $nq = max(1, sizeof($joinClasses) - 1);
+
+        error_log('NQ: ' . $nq);
+
+        // the -1 here is to avoid indexing the base class, be it DataObject or Page
+        $commas = str_repeat('?, ', $nq);
+
+        // this removes trailing ', '
+        $commas = substr($commas, 0, -2);
+
+        error_log('T1: ' . $commas);
+        $columns = implode(', ', $joinClasses);
+        error_log('COMMAS: ' . $commas);
+        error_log('T2: ' . $commas);
+        error_log('COLUMNS = ' . $columns);
+
+
+        if ($this->databaseType == self::MYSQL) {
+            $sql = str_replace(
+                'WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas . '))',
+                "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
+                $sql);
+        } elseif ($this->databaseType == self::POSTGRESQL) {
+            error_log("+++++++++++++++++++++++++++\n\n\n\n" . 'SQL BEFORE ADDING CLASSES:' . $sql);
+            $commas = str_replace('?', '\?', $commas);
+            $selectorForId = '/WHERE ("SiteTree_Live"."ClassName" IN (' . $commas . '))/';
+            //$search = '/WHERE ("SiteTree_Live"\."ClassName" IN (\?, \?))/';
+            $replacement = 'WHERE ("SiteTree_Live"."ClassName" IN ( ' . $columns . '))';
+
+            // testing
+            $selectorForId = '/WHERE \("SiteTree_Live"."ClassName" IN \(\?\)\)/';
+            \
+                error_log('>> SELECTOR: ' . $selectorForId);
+            error_log('>> REPLACEMENT: ' . $replacement);
+            error_log('>> SQL: ' . $sql);
+            $sql = preg_replace($selectorForId, $replacement, $sql);
+        }
+
+        error_log('TRACE 4 [addition of classnames]:' . $sql);
+
+
+        $sqlArray = explode(PHP_EOL, $sql);
+        $sql = implode(' \\' . "\n", $sqlArray);
+
+        // loop through fields adding attribute or altering sql as needbe
+        $allFields = $fields;
+        $allFields[] = 'LastEdited';
+        $allFields[] = 'Created';
+
+        // make modifications to query and or attributes but only if required
+        foreach ($allFields as $field) {
+            if (isset($specs[$field])) {
+                $fieldType = $specs[$field];
+                switch ($fieldType) {
+                    case 'DBDatetime':
+                        $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
+                        // $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
+                        $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
+                        break;
+                    case 'Datetime':
+                        $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
+                        // this breaks order by if field is after: $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
+                        $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
+                        break;
+                    case 'Boolean':
+                        $attributes->push(['Name' => $field, 'Type' => 'sql_attr_bool']); // @todo informed guess
+                        break;
+                    case 'ForeignKey':
+                        $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                        break;
+                    default:
+                        // do nothing
+                        break;
+                }
+
+                // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
+                if (in_array($field, $facetHeadings)) {
+                    $fieldType = $specs[$field];
+
+                    // remove string length from varchar
+                    if (substr($fieldType, 0, 7) === "Varchar") {
+                        $fieldTYpe = 'Varchar';
+                    }
+
+                    // NOTE, cannot filter on string attributes, see http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
+                    // OH, it seems to work :)
+                    switch ($fieldType) {
+                        case 'Int':
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                            break;
+                        case 'Varchar':
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_string']);
+                            break;
+                        case 'HTMLText':
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
+                            break;
+                        case 'Float':
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_float']);
+                            break;
+                        default:
+                            // do nothing
+                            break;
+                    }
+                }
+            } else {
+                user_error("The field {$field} does not exist for class {$className}");
+            }
+        }
+
+        $params = new ArrayData([
+            'IndexName' => $sphinxSiteID . '_' . $name,
+            'SQL' => 'SQL_QUERY_HERE',
+            'DB_HOST' => !empty($this->databaseHost) ? $this->databaseHost : Environment::getEnv('SS_DATABASE_SERVER'),
+            'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
+            'DB_PASSWD' => Environment::getEnv('SS_DATABASE_PASSWORD'),
+            'DB_NAME' => !empty($this->databaseName) ? $this->databaseName : Environment::getEnv('SS_DATABASE_NAME'),
+            'Attributes' => $attributes,
+        ]);
+
+
+        $configuration = null;
+
+        if ($this->databaseType == self::MYSQL) {
+            $configuraton = $params->renderWith('MySQLIndexClassConfig');
+        } elseif ($this->databaseType == self::POSTGRESQL) {
+            $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
+        }
+
+        return array($name, $sql, $configuraton);
     }
 }
