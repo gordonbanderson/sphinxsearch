@@ -26,10 +26,18 @@ class Indexer
 
     protected $databaseHost;
 
+    const MYSQL='mysql';
+    const POSTGRESQL='postgresql';
+
     /**
      * @var null|Indexes indexes in current context
      */
     private $indexes = null;
+
+    /**
+     * database type, default to mysql
+     */
+    private $databaseType = self::MYSQL;
 
     /**
      * Indexer constructor.
@@ -76,13 +84,17 @@ class Indexer
             user_error('The database used must be one of MySQL or Postgres');
         }
 
+        // default is mysql
+        if ($isPostgresSQL) {
+            $this->databaseType = self::POSTGRESQL;
+        }
+
 
         $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
 
 
         /** @var Index $index */
-        foreach($this->indexes as $index)
-        {
+        foreach ($this->indexes as $index) {
             $className = $index->getClass();
 
             error_log("\n\n---- Index for " . $className . '----');
@@ -96,17 +108,20 @@ class Indexer
             $attributes = new ArrayList();
 
             // @todo different field types
-            foreach($index->getFields() as $field)
-            {
+            foreach ($index->getFields() as $field) {
                 $fields[] = $field;
             }
 
-            foreach($index->getTokens() as $token)
-            {
+            foreach ($index->getTokens() as $token) {
                 $fields[] = $token;
             }
 
-            $tokens = $index->getTokens();
+            // These are the facet headings from the config, camel case
+            $facetHeadings = $index->getTokens();
+
+            error_log('++++ TOKENS ++++');
+            error_log(print_r($facetHeadings, 1));
+
 
             /** @var DataList $query */
             $singleton = singleton($className);
@@ -138,10 +153,9 @@ class Indexer
 
             // need to know for the stage, dataobjects assumed flat (@todo This is most probably an incorrect assertion)
             $isSiteTree = false;
-            while($classNameInHierarchy != 'SilverStripe\ORM\DataObject')
-            {
+            while ($classNameInHierarchy != 'SilverStripe\ORM\DataObject') {
                 if ($classNameInHierarchy != 'SilverStripe\CMS\Model\SiteTree') {
-                    $joinClasses[] = '\'' .  str_replace('\\', '\\\\', $classNameInHierarchy) . '\'';
+                    $joinClasses[] = '\'' . str_replace('\\', '\\\\', $classNameInHierarchy) . '\'';
                 } else {
                     $isSiteTree = true;
                 }
@@ -150,7 +164,7 @@ class Indexer
             }
 
             // replacement double quotes with backticks for MySQL
-            if ($isMySQL) {
+            if ($this->databaseType == self::MYSQL) {
                 $sql = str_replace('"', '`', $sql);
                 // need to move ID to first param
                 if ($isSiteTree) {
@@ -162,16 +176,16 @@ class Indexer
                 }
             }
 
-            if ($isPostgresSQL) {
+            if ($this->databaseType == self::POSTGRESQL) {
                 error_log('**** IS PG ****');
 
-                /** @var string $quote  Single double quote character to get aroun escaping issues*/
+                /** @var string $quote Single double quote character to get aroun escaping issues */
                 $quote = '"';
 
                 // need to move ID to first param
                 if ($isSiteTree) {
                     error_log('>>>> PG1');
-                    $selectorForId = $quote .  'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
+                    $selectorForId = $quote . 'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
                     error_log('SFID: ' . $selectorForId);
                     error_log('>>>> PG2, sql = ' . $sql);
 
@@ -179,12 +193,12 @@ class Indexer
                     // we wish only to replace the first one as this search term can also appear in the join clause
                     $sql = preg_replace($pattern, '', $sql, 1);
 
-                   // $sql = str_replace($selectorForId, ", '', $sql);
+                    // $sql = str_replace($selectorForId, ", '', $sql);
                     error_log('TRACE 1 [moving ID to first param]:' . $sql);
                     error_log('>>>> PG3');
 
 
-                    $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.'  . $quote . 'ID' . $quote . ',';
+                    $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.' . $quote . 'ID' . $quote . ',';
                     //$sql = str_replace('SELECT DISTINCT', $selectorForId, ", $sql);
 
 
@@ -201,7 +215,7 @@ class Indexer
                     $sql = preg_replace('/' . $selectorForId . '/', '', $sql);
 
 
-                    $replace = 'SELECT DISTINCT ' . $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote .',';
+                    $replace = 'SELECT DISTINCT ' . $quote . $tableName . $quote . '.' . $quote . 'ID' . $quote . ',';
                     $sql = preg_replace('/SELECT DISTINCT/', $replace, $sql);
 
                     $sql = preg_replace('/, ,/', ',', $sql);
@@ -213,7 +227,6 @@ class Indexer
             error_log('TRACE 3 [id should be at front, postgres and mysql]:' . $sql);
 
 
-
             error_log(print_r($joinClasses, 1));
 
             $nq = max(1, sizeof($joinClasses) - 1);
@@ -221,10 +234,10 @@ class Indexer
             error_log('NQ: ' . $nq);
 
             // the -1 here is to avoid indexing the base class, be it DataObject or Page
-            $commas = str_repeat('?, ', $nq );
+            $commas = str_repeat('?, ', $nq);
 
             // this removes trailing ', '
-            $commas = substr( $commas, 0, -2 );
+            $commas = substr($commas, 0, -2);
 
             error_log('T1: ' . $commas);
             $columns = implode(', ', $joinClasses);
@@ -233,12 +246,12 @@ class Indexer
             error_log('COLUMNS = ' . $columns);
 
 
-            if ($isMySQL) {
+            if ($this->databaseType == self::MYSQL) {
                 $sql = str_replace(
                     'WHERE (`SiteTree_Live`.`ClassName` IN (' . $commas . '))',
                     "WHERE (`SiteTree_Live`.`ClassName` IN ({$columns}))",
                     $sql);
-            } elseif ($isPostgresSQL) {
+            } elseif ($this->databaseType == self::POSTGRESQL) {
                 error_log("+++++++++++++++++++++++++++\n\n\n\n" . 'SQL BEFORE ADDING CLASSES:' . $sql);
                 $commas = str_replace('?', '\?', $commas);
                 $selectorForId = '/WHERE ("SiteTree_Live"."ClassName" IN (' . $commas . '))/';
@@ -247,15 +260,14 @@ class Indexer
 
                 // testing
                 $selectorForId = '/WHERE \("SiteTree_Live"."ClassName" IN \(\?\)\)/';
-\
-                error_log('>> SELECTOR: ' . $selectorForId);
+                \
+                    error_log('>> SELECTOR: ' . $selectorForId);
                 error_log('>> REPLACEMENT: ' . $replacement);
                 error_log('>> SQL: ' . $sql);
                 $sql = preg_replace($selectorForId, $replacement, $sql);
             }
 
             error_log('TRACE 4 [addition of classnames]:' . $sql);
-
 
 
             $sqlArray = explode(PHP_EOL, $sql);
@@ -267,18 +279,17 @@ class Indexer
             $allFields[] = 'Created';
 
             // make modifications to query and or attributes but only if required
-            foreach($allFields as $field)
-            {
+            foreach ($allFields as $field) {
                 if (isset($specs[$field])) {
                     $fieldType = $specs[$field];
-                    switch($fieldType) {
+                    switch ($fieldType) {
                         case 'DBDatetime':
-                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
+                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
                             // $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
                             break;
                         case 'Datetime':
-                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
+                            $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
                             // this breaks order by if field is after: $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS {$field}" , $sql);
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_timestamp']);
                             break;
@@ -294,18 +305,17 @@ class Indexer
                     }
 
                     // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
-                    if (in_array($field, $tokens)) {
+                    if (in_array($field, $facetHeadings)) {
                         $fieldType = $specs[$field];
 
                         // remove string length from varchar
-                        if (substr( $fieldType, 0, 7 ) === "Varchar") {
+                        if (substr($fieldType, 0, 7) === "Varchar") {
                             $fieldTYpe = 'Varchar';
                         }
 
-                        // @todo - float
                         // NOTE, cannot filter on string attributes, see http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
                         // OH, it seems to work :)
-                        switch($fieldType) {
+                        switch ($fieldType) {
                             case 'Int':
                                 $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
                                 break;
@@ -329,8 +339,8 @@ class Indexer
             }
 
             $params = new ArrayData([
-               'IndexName' => $sphinxSiteID . '_' . $name,
-               'SQL' => 'SQL_QUERY_HERE',
+                'IndexName' => $sphinxSiteID . '_' . $name,
+                'SQL' => 'SQL_QUERY_HERE',
                 'DB_HOST' => !empty($this->databaseHost) ? $this->databaseHost : Environment::getEnv('SS_DATABASE_SERVER'),
                 'DB_USER' => Environment::getEnv('SS_DATABASE_USERNAME'),
                 'DB_PASSWD' => Environment::getEnv('SS_DATABASE_PASSWORD'),
@@ -342,7 +352,7 @@ class Indexer
             $configuration = null;
 
             // configs are different for each of MySQL and PostgreSQL
-            switch($database) {
+            switch ($database) {
                 case 'MySQLPDODatabase':
                     $configuraton = $params->renderWith('MySQLIndexClassConfig');
                     break;
@@ -361,6 +371,7 @@ class Indexer
         return $allConfigs;
     }
 
+
     /**
      * Create a valid sphinx.conf file and save it.  Note that the commandline or web server user must have write
      * access to the path defined in _config.
@@ -369,16 +380,14 @@ class Indexer
     {
         // This is based on the Docker version of the manticore config, with additional indexes for each site
         // in spearate files under /path/to/config/sites , and then included
-        $prefix = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+        $prefix = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'prefix.conf');
-        $common = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+        $common = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'common.conf');
-        $indexer = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+        $indexer = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'indexer.conf');
-        $searchd = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
+        $searchd = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
             . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'searchd.conf');
-        $suffix = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'
-            . DIRECTORY_SEPARATOR . 'sphinxconfig' . DIRECTORY_SEPARATOR . 'suffix.conf');
 
         // specific to silverstripe data
         $sphinxConfigurations = $this->generateConfig();
@@ -392,9 +401,9 @@ class Indexer
 
         $config = $prefix . $common . $indexer . $searchd;
 
-        error_log($sphinxSavePath);
+        // error_log($sphinxSavePath);
 
-       // exec('find /etc/');
+        // exec('find /etc/');
         echo '---------------';
         #exec('ls -lh /etc/sphinxsearch', $output);
         exec('whoami', $output);
@@ -403,15 +412,23 @@ class Indexer
 
 
         $siteConfig = '';
-        foreach(array_keys($sphinxConfigurations) as $filename) {
+
+        print_r(array_keys($sphinxConfigurations));
+        foreach (array_keys($sphinxConfigurations) as $filename) {
             error_log('FN:' . $filename);
             $siteConfig .= $sphinxConfigurations[$filename];
         }
 
         $sitesDir = dirname($sphinxSavePath) . DIRECTORY_SEPARATOR . 'sites' . DIRECTORY_SEPARATOR;
         $siteConfigPath = $sitesDir .
-            $sphinxSiteID  . '.conf';
-echo $siteConfigPath;
+            $sphinxSiteID . '.conf';
+        echo $sitesDir;
+
+        if (!file_exists($sitesDir)) {
+            mkdir($sitesDir);
+        }
+
+
         file_put_contents($siteConfigPath, $siteConfig);
 
         //file_put_contents($sphinxSiteIDTMP, $config);
@@ -419,17 +436,28 @@ echo $siteConfigPath;
 
         $filelist = glob($sitesDir . "*.conf");
         print_r($filelist);
-        foreach($filelist as $file) {
+
+        $fullconfig = '';
+        $fullconfig .= $config;
+
+        foreach ($filelist as $file) {
+            echo $file;
             $contents = file_get_contents($file);
-            $config .= "\n\n\n\n\n" . $contents;
+            $fullconfig = $fullconfig . "\n\n\n\n\n" . $contents;
+
+            echo '-----';
+            error_log($contents);
+
         }
+
+        error_log($fullconfig);
 
         // @todo Fix permissions on docker config path for manticore
 
+        file_put_contents($sphinxSavePath, $fullconfig);
 
         error_log('---- saved config ----');
         error_log($sphinxSavePath);
 
-        file_put_contents($sphinxSavePath, $config);
     }
 }

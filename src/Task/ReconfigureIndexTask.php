@@ -18,7 +18,7 @@ class ReconfigureIndexTask extends BuildTask
 
     protected $title = 'Regenerate Sphinx Configuration';
 
-    protected $description = 'Regenerate sphinx configuration from models';
+    protected $description = 'Regenerate sphinx configuration from YML config';
 
     private static $segment = 'sphinxconfig';
 
