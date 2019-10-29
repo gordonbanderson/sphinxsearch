@@ -20,7 +20,7 @@ source {$IndexName}_source
 	#sql_attr_uint		= ID
 
     #@todo These need aliased
-    <% loop $Attributes %>$Type = $Name
+    <% loop $Attributes %>$Type = $Name.RAW
     <% end_loop %>
 \}
 
