@@ -201,34 +201,19 @@ class Indexer
     public function generateConfigForIndex(Index $index)
     {
         $sphinxSiteID = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'site_id');
-        $className = $index->getClass();
-
-        error_log("\n\n---- Index for " . $className . '----');
-
+         $fields = $this->getIndexFields($index);
 
         // these are stored in the db but not part of free text search
         $attributes = new ArrayList();
 
-        $fields = $this->getIndexFields($index);
-
-
-
-        /** @var DataList $query */
-        $singleton = singleton($className);
-        $tableName = $singleton->config()->get('table_name');
-        $schema = $singleton->getSchema();
-
-        $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
-
+        list($clazzName, $tableName, $specs) = $this->getSpecs($index);
 
         // need to override sort, set it to null
-        Config::modify()->set($className, 'default_sort', null);
+        Config::modify()->set($clazzName, 'default_sort', null);
 
-        // @todo fix reference here
-        /** @var DataObject $queryObject */
 
         /** @var $DataList $queryObject */
-        $queryObject = Versioned::get_by_stage($className, Versioned::LIVE);
+        $queryObject = Versioned::get_by_stage($clazzName, Versioned::LIVE);
 
         // this is how to do it with a DataList, it clones and returns a new DataList
         $queryObject = $queryObject->setQueriedColumns($fields);
@@ -236,9 +221,17 @@ class Indexer
         // this needs massages for sphinx
         $sql = $queryObject->sql();
 
-        error_log('T1: ' . $sql);
+        /**
+         * Example SQL produced by the above
+         * SELECT DISTINCT "SiteTree_Live"."ClassName", "SiteTree_Live"."LastEdited", "SiteTree_Live"."Created", "SiteTree_Live"."Title", "SiteTree_Live"."MenuTitle", "SiteTree_Live"."Content", "SiteTree_Live"."Sort", "SiteTree_Live"."ParentID", "SiteTree_Live"."ID",
+        CASE WHEN "SiteTree_Live"."ClassName" IS NOT NULL THEN "SiteTree_Live"."ClassName"
+        ELSE  E'SilverStripe\\CMS\\Model\\SiteTree' END AS "RecordClassName"
+        FROM "SiteTree_Live"
 
-        $classNameInHierarchy = $className;
+         */
+
+
+        $classNameInHierarchy = $clazzName;
         $joinClasses = [];
 
         // need to know for the stage, dataobjects assumed flat (@todo This is most probably an incorrect assertion)
@@ -272,27 +265,15 @@ class Indexer
 
             // need to move ID to first param
             if ($isSiteTree) {
-                error_log('>>>> PG1');
                 $selectorForId = $quote . 'SiteTree_Live' . $quote . '.' . $quote . 'ID' . $quote;
-                error_log('SFID: ' . $selectorForId);
-                error_log('>>>> PG2, sql = ' . $sql);
 
                 $pattern = '/' . $selectorForId . '/';
                 // we wish only to replace the first one as this search term can also appear in the join clause
                 $sql = preg_replace($pattern, '', $sql, 1);
 
-                // $sql = str_replace($selectorForId, ", '', $sql);
-                error_log('TRACE 1 [moving ID to first param]:' . $sql);
-                error_log('>>>> PG3');
-
-
                 $prefix = 'SELECT DISTINCT ' . $quote . $tableName . '_Live' . $quote . '.' . $quote . 'ID' . $quote . ',';
-                //$sql = str_replace('SELECT DISTINCT', $selectorForId, ", $sql);
-
-
                 $sql = preg_replace('/SELECT DISTINCT/', '', $sql);
                 $sql = $prefix . $sql;
-                error_log('TRACE 2 [id move to front of query]:' . $sql);
 
                 // remove potential double commas due to moving of the ID field in the query
                 $sql = str_replace(', ,', ',', $sql);
@@ -392,6 +373,7 @@ class Indexer
                 }
 
 
+                $facetHeadings = $index->getTokens();
                 // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
                 if (in_array($field, $facetHeadings)) {
                     $fieldType = $specs[$field];
@@ -422,7 +404,7 @@ class Indexer
                     }
                 }
             } else {
-                user_error("The field {$field} does not exist for class {$className}");
+                user_error("The field {$field} does not exist for class {$clazzName}");
             }
         }
 
@@ -480,5 +462,23 @@ class Indexer
             $fields[] = $token;
         }
         return $fields;
+    }
+
+    /**
+     * @param Index $index
+     * @return array
+     */
+    public function getSpecs(Index $index): array
+    {
+        $clazzName = $index->getClass();
+
+        error_log("\n\n---- Index for " . $clazzName . '----');
+
+        /** @var DataList $query */
+        $singleton = singleton($clazzName);
+        $tableName = $singleton->config()->get('table_name');
+        $schema = $singleton->getSchema();
+        $specs = $schema->fieldSpecs($clazzName, DataObjectSchema::DB_ONLY);
+        return array($clazzName, $tableName, $specs);
     }
 }
