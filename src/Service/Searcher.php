@@ -36,6 +36,11 @@ class Searcher
     private $facettedTokens = [];
 
     /**
+     * @var array tokens from MVA.  These will need some PHP love to get them renderable
+     */
+    private $hasManyTokens = [];
+
+    /**
      * @var array associative array of filters against tokens
      */
     private $filters = [];
@@ -70,10 +75,19 @@ class Searcher
      */
     public function setFacettedTokens($facettedTokens)
     {
-        // @todo This appears to work for MVA, but IDs are returned
-        //array_push($facettedTokens, 'flickrtagid');
         $this->facettedTokens = $facettedTokens;
+    }
 
+    public function setHasManyTokens($hasManyTokens)
+    {
+        // @todo This appears to work for MVA, but IDs are returned
+       // array_push($facettedTokens, 'flickrtagid');
+        $this->hasManyTokens = [];
+        foreach($hasManyTokens as $token) {
+            $token = substr($token, 0, -1);
+            $token = strtolower($token);
+            $this->hasManyTokens[] = $token . 'id';
+        }
     }
 
 
@@ -132,7 +146,16 @@ class Searcher
         }
 
 
+        // add the tokens as facets
         foreach($this->facettedTokens as $tokenToFacet) {
+            $facet = (new Facet($connection))->facet(array($tokenToFacet));
+            //$facet->orderBy()
+            $query->facet($facet);
+        }
+
+        // add MVA as facets - note these will come back with numerical IDs only, cannot be sorted, and need PHP massage
+        foreach($this->hasManyTokens as $tokenToFacet) {
+            echo $tokenToFacet;
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
             $query->facet($facet);
         }
@@ -149,6 +172,7 @@ class Searcher
         $result = $query->executeBatch()
             ->getStored();
 
+        //echo "<pre>". print_r($result,1) . "</pre>";
 
         /** @var ResultSet $resultSet */
         $resultSet = $result[0];
@@ -157,7 +181,10 @@ class Searcher
 
         $ctr = 1;
         $facets = [];
-        foreach($this->facettedTokens as $token)
+
+        $tokens = array_merge($this->facettedTokens, $this->hasManyTokens);
+
+        foreach($tokens as $token)
         {
             $resultSet = $result[$ctr];
             $rawFacets = $resultSet->fetchAllAssoc();
