@@ -97,6 +97,7 @@ class Indexer
         foreach ($this->indexes as $index) {
             $name = $index->getName();
             $configuraton = $this->generateConfigForIndex($index);
+
             $allConfigs[$sphinxSiteID . '_' . $name] = "{$configuraton}";
         }
         return $allConfigs;
@@ -347,10 +348,13 @@ class Indexer
         $allFields[] = 'LastEdited';
         $allFields[] = 'Created';
 
-        // make modifications to query and or attributes but only if required
+        // make modifications to query and or attributes but only if required.  Text and HTML fields can be left as is
         foreach ($allFields as $field) {
             if (isset($specs[$field])) {
                 $fieldType = $specs[$field];
+                error_log('FIELDTYPE: ' . $field . ' ==> ' . $fieldType);
+
+                // this ought to be a separate method, but the $sql tweaking makes this trickier
                 switch ($fieldType) {
                     case 'DBDatetime':
                         $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`", $sql);
@@ -390,10 +394,10 @@ class Indexer
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']);
                             break;
                         case 'Varchar':
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_string']);
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_field_string']);
                             break;
                         case 'HTMLText':
-                            $attributes->push(['Name' => $field, 'Type' => 'sql_attr_uint']); // @todo << is this correct?
+                            $attributes->push(['Name' => $field, 'Type' => 'sql_field_string']);
                             break;
                         case 'Float':
                             $attributes->push(['Name' => $field, 'Type' => 'sql_attr_float']);
@@ -403,10 +407,14 @@ class Indexer
                             break;
                     }
                 }
+
             } else {
                 user_error("The field {$field} does not exist for class {$clazzName}");
             }
         }
+
+        $this->processHasManyFields($index, $tableName, $attributes);
+
 
         $params = new ArrayData([
             'IndexName' => $sphinxSiteID . '_' . $index->getName(),
@@ -422,6 +430,7 @@ class Indexer
         $configuration = null;
 
         if ($this->databaseType == self::MYSQL) {
+            // @todo PG needed .RAW for the name on multi attribute
             $configuraton = $params->renderWith('MySQLIndexClassConfig');
         } elseif ($this->databaseType == self::POSTGRESQL) {
             $configuraton = $params->renderWith('PostgreSQLIndexClassConfig');
@@ -431,6 +440,47 @@ class Indexer
         $configuration = str_replace('SQL_QUERY_HERE', $sql, $configuraton);
 
         return $configuration;
+    }
+
+
+    private function processHasManyFields($index, $tableName, &$attributes)
+    {
+        $hasManyFields = $index->getHasManyFields();
+        if (!empty($hasManyFields)) {
+            error_log(print_r($hasManyFields, 1));
+            foreach($hasManyFields as $field) {
+                //sql_attr_multi = bigint FlickrTagID from query; SELECT "FlickrPhotoID", "FlickrTagID" FROM "FlickrPhoto_FlickrTags";
+
+                // @todo use doctrine/inflector package - this is naive but just to get it working in concept
+                $singular = substr($field, 0, -1);
+                $pair = [$singular, $tableName];
+                sort($pair);
+                print_r($pair);
+                $joinTable = $pair[0] . '_' . $pair[1] . 's';
+                echo $singular;
+
+                $quote = '"';
+
+
+                // @todo Ranged queries, once I understand them
+                $multiQuery = "bigint {$singular}ID from query; SELECT ";
+                $multiQuery .= $quote;
+                $multiQuery .= $pair[0];
+                $multiQuery .= 'ID","';
+                $multiQuery .= $pair[1];
+                $multiQuery .= 'ID" FROM "';
+                $multiQuery .= $joinTable;
+                            $multiQuery .= '"';
+
+
+                error_log($multiQuery) ;
+                $attributes->push(['Name' => $multiQuery, 'Type' => 'sql_attr_multi']);
+            }
+            ;
+
+            print_r($attributes);
+        }
+
     }
 
     /**
