@@ -8,7 +8,7 @@
 
 namespace Suilven\SphinxSearch\Service;
 
-use Foolz\SphinxQL\Drivers\Pdo\Connection;
+use SilverStripe\Core\Extensible;
 use Foolz\SphinxQL\Facet;
 use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
@@ -24,6 +24,8 @@ use Suilven\FreeTextSearch\Indexes;
 
 class Searcher
 {
+
+    use Extensible;
 
     private $client;
 
@@ -169,8 +171,8 @@ class Searcher
         // add the tokens as facets
         foreach($this->facettedTokens as $tokenToFacet) {
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
-            //$facet->orderBy("count(*)", "desc");
-            $facet->orderBy('iso', 'desc');
+            $facet->orderBy("count(*)", "desc");
+            //$facet->orderBy('iso', 'desc');
             $query->facet($facet);
         }
 
@@ -254,8 +256,17 @@ class Searcher
                 $this->makeFacetsHumanReadable($token,$tokenFacets);
             }
 
+           // list($token,$facets) =
+            $facetTitle = $token;
+            $facetResults = $tokenFacets;
 
-            $facets[] = ['Name' => $token, 'Facets' => new ArrayList($tokenFacets)];
+            // this is coming back as an array, no idea why
+            $this->extend('postProcessFacetTitle', $facetTitle);
+            $this->extend('postProcessFacetResults', $facetTitle, $facetResult);
+
+           // echo 'FT: ' . $facetTitle;
+
+            $facets[] = ['Name' => $facetTitle, 'Facets' => new ArrayList($facetResults)];
         }
 
 
