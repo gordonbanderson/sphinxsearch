@@ -316,7 +316,7 @@ class Searcher
                 // @todo get from index, need all text fields
                     // @todo make part of index configuration
                     $dataobject->Title . ' ' . $dataobject->Content, // @todo this is incorrect for photos as 2 lines above
-                    $sphinxSiteID . '_' . $this->index . '_index',
+                    $sphinxSiteID . '_' . $this->index->getName() . '_index',
                     $q,
                     [
                         // @todo Make configurable
@@ -396,8 +396,6 @@ class Searcher
         $classname = $this->mvaFields[$token];
 
         foreach($tokenFacets as $facet) {
-            print_r($facet);
-
             // @todo make this more efficient
             $facet['Value'] = DataObject::get_by_id($classname, $facet['Value'])->RawValue;
             $result[] = $facet;
