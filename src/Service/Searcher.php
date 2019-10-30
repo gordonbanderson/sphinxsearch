@@ -14,9 +14,12 @@ use Foolz\SphinxQL\Helper;
 use Foolz\SphinxQL\SphinxQL;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\PaginatedList;
 use SilverStripe\View\ArrayData;
+use Suilven\FreeTextSearch\Index;
 use Suilven\FreeTextSearch\Indexes;
 
 class Searcher
@@ -28,7 +31,15 @@ class Searcher
 
     private $page = 1;
 
-    private $index = 'sitetree';
+    private $indexName = 'sitetree';
+
+    /** @var Index */
+    private $index = null;
+
+    /**
+     * @var array associative mapping of mvatitle to SS Class to search IDs against
+     */
+    private $mvaFields = [];
 
     /**
      * @var array tokens that are facetted, e.g. Aperture, BlogID
@@ -64,9 +75,18 @@ class Searcher
     /**
      * @param string $index
      */
-    public function setIndex($index)
+    public function setIndexName($indexName)
     {
-        $this->index = $index;
+        $this->indexName = $indexName;
+
+        $indexesService = new Indexes();
+        $indexesObj = $indexesService->getIndexes();
+        foreach($indexesObj as $indexObj) {
+            if($indexObj->getName() == $indexName) {
+                $this->index = $indexObj;
+                break;
+            };
+        }
     }
 
 
@@ -113,10 +133,10 @@ class Searcher
         $connection = $this->client->getConnection();
 
         // @todo make fields configurable?
-        $siteIndex = $sphinxSiteID . '_' . $this->index;
+        $indexName = $sphinxSiteID . '_' . $this->index->getName();
 
         $query = (new SphinxQL($connection))->select('id')
-            ->from([$siteIndex .'_index', $siteIndex  . '_rt']);
+            ->from([$indexName .'_index', $indexName  . '_rt']);
 
         // leaving $q empty searches for everything
         if (!empty($q)) {
@@ -149,13 +169,14 @@ class Searcher
         // add the tokens as facets
         foreach($this->facettedTokens as $tokenToFacet) {
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
-            //$facet->orderBy()
+            //$facet->orderBy("count(*)", "desc");
+            $facet->orderBy('iso', 'desc');
             $query->facet($facet);
         }
 
         // add MVA as facets - note these will come back with numerical IDs only, cannot be sorted, and need PHP massage
         foreach($this->hasManyTokens as $tokenToFacet) {
-            echo $tokenToFacet;
+            $this->getClassNameForMVATitle($tokenToFacet);
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
             $query->facet($facet);
         }
@@ -221,9 +242,23 @@ class Searcher
             }
             $ctr++;
 
-            // @todo human readable title
+
+
+
+            $mvaKeys = array_keys($this->mvaFields);
+
+
+            if (in_array($token, $mvaKeys)) {
+                $tokenFacets = $this->makeMVAFacetsHumanReadable($token, $tokenFacets);
+            } else {
+                $this->makeFacetsHumanReadable($token,$tokenFacets);
+            }
+
+
             $facets[] = ['Name' => $token, 'Facets' => new ArrayList($tokenFacets)];
         }
+
+
 
         /**
          * // create a SphinxQL Connection object to use with SphinxQL
@@ -264,7 +299,7 @@ class Searcher
             foreach($indexes as $indexObj)
             {
                 $name = $sphinxSiteID . '_' . $indexObj->getName();
-                if ($name == $siteIndex) {
+                if ($name == $indexName) {
                     $clazz = $indexObj->getClass();
                     break;
                 }
@@ -322,5 +357,57 @@ class Searcher
             'Pagination' => $pagination,
             'AllFacets' => empty($facets) ? False : new ArrayList($facets)
         ];
+    }
+
+
+    /**
+     * @param $mavTitle This will be the lowercase name of a silverstripe relationship name, e.g. flickrtagid (from FlickrTags)
+     */
+    private function getClassNameForMVATitle($mvaTitle)
+    {
+        $clazz = $this->index->getClass();
+
+        /** @var DataList $query */
+        $singleton = singleton($clazz);
+
+        /** @var DataObjectSchema $schema */
+        $schema = $singleton->getSchema();
+
+        foreach($this->index->getHasManyFields() as $field) {
+            error_log('FIELD: ' . $field);
+            error_log('---- specs ----');
+
+            // @todo Test genuine has many as opposed to many many
+            $specs = $schema->manyManyComponent($clazz, 'FlickrTags');
+            $this->mvaFields[$mvaTitle] = $specs['childClass'];
+        }
+
+    }
+
+    /**
+     * @param $tokenFacets
+     * @return array tokens in a more human readable form
+     */
+    private function makeMVAFacetsHumanReadable($token, $tokenFacets)
+    {
+        $ctr = 0;
+        $result = [];
+
+        $classname = $this->mvaFields[$token];
+
+        foreach($tokenFacets as $facet) {
+            print_r($facet);
+
+            // @todo make this more efficient
+            $facet['Value'] = DataObject::get_by_id($classname, $facet['Value'])->RawValue;
+            $result[] = $facet;
+        }
+
+        return $result;
+    }
+
+    private function makeFacetsHumanReadable($token, &$tokens)
+    {
+        // @todo
     }
 }

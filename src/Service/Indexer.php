@@ -443,34 +443,47 @@ class Indexer
     }
 
 
-    private function processHasManyFields($index, $tableName, &$attributes)
+    private function processHasManyFields($index, $relationshipName, &$attributes)
     {
+
         $hasManyFields = $index->getHasManyFields();
+       // $tableName = $singleton->config()->get('table_name');
+
+        $clazz = $index->getClass();
+
+        error_log("\n\n---- Index for " . $clazz . '----');
+
+        /** @var DataList $query */
+        $singleton = singleton($clazz);
+
+        /** @var DataObjectSchema $schema */
+        $schema = $singleton->getSchema();
+
+
+
         if (!empty($hasManyFields)) {
             error_log(print_r($hasManyFields, 1));
             foreach($hasManyFields as $field) {
+                error_log('FIELD: ' . $field);
+                error_log('---- specs ----');
+
+                // @todo Test genuine has many as opposed to many many
+                $specs = $schema->manyManyComponent($clazz, 'FlickrTags');
+
                 //sql_attr_multi = bigint FlickrTagID from query; SELECT "FlickrPhotoID", "FlickrTagID" FROM "FlickrPhoto_FlickrTags";
 
-                // @todo use doctrine/inflector package - this is naive but just to get it working in concept
-                $singular = substr($field, 0, -1);
-                $pair = [$singular, $tableName];
-                sort($pair);
-                print_r($pair);
-                $joinTable = $pair[0] . '_' . $pair[1] . 's';
-                echo $singular;
-
+                $joinTable = $specs['join'];
                 $quote = '"';
 
-
                 // @todo Ranged queries, once I understand them
-                $multiQuery = "bigint {$singular}ID from query; SELECT ";
+                $multiQuery = "bigint {$specs['childField']} from query; SELECT ";
                 $multiQuery .= $quote;
-                $multiQuery .= $pair[0];
-                $multiQuery .= 'ID","';
-                $multiQuery .= $pair[1];
-                $multiQuery .= 'ID" FROM "';
+                $multiQuery .= $specs['parentField'];
+                $multiQuery .= '","';
+                $multiQuery .= $specs['childField'];
+                $multiQuery .= '" FROM "';
                 $multiQuery .= $joinTable;
-                            $multiQuery .= '"';
+                $multiQuery .= '"';
 
 
                 error_log($multiQuery) ;
