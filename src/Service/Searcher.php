@@ -172,6 +172,7 @@ class Searcher
         foreach($this->facettedTokens as $tokenToFacet) {
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
             $facet->orderBy("count(*)", "desc");
+            //$facet->limit(1000);
             //$facet->orderBy('iso', 'desc');
             $query->facet($facet);
         }
@@ -180,6 +181,7 @@ class Searcher
         foreach($this->hasManyTokens as $tokenToFacet) {
             $this->getClassNameForMVATitle($tokenToFacet);
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
+            $facet->limit(1000);
             $query->facet($facet);
         }
 
@@ -262,11 +264,13 @@ class Searcher
 
             // this is coming back as an array, no idea why
             $this->extend('postProcessFacetTitle', $facetTitle);
-            $this->extend('postProcessFacetResults', $facetTitle, $facetResult);
 
-           // echo 'FT: ' . $facetTitle;
+            // @todo There is an extra layer of array being introduced here, cannot immediately see why.  This is currently
+            // $result[0] holding the final result, it is correct at the exit point within the method
+            $processedFacetResults = $this->extend('postProcessFacetResults', $facetTitle, $facetResults);
 
-            $facets[] = ['Name' => $facetTitle, 'Facets' => new ArrayList($facetResults)];
+
+            $facets[] = ['Name' => $facetTitle, 'Facets' => new ArrayList($processedFacetResults[0])];
         }
 
 
