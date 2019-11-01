@@ -247,14 +247,16 @@ class Searcher
                         // flickrtagid=>28 for example
                         // name is likes of flickrtagid
 
-                        if (isset($filterForFacet[$name])) {
+                        if (!empty($filterForFacet) && isset($filterForFacet[$name])) {
                             echo '**** MATCH ****?';
                             // a break is needed here for the correct condition
                             echo "VALUE: " . $value . ', ' . $filterForFacet[$name] . "\n";
                             if ($value != $filterForFacet[$name]) {
+                                // if the values do not match, i.e. the MVA id does not match, skip rendering
+                                // We only wish to show the selected ones
                                 continue;
                             }
-                        } else {
+                        } else if (!empty($filterForFacet)) {
                             continue;
                         }
                     }
