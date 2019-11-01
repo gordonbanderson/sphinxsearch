@@ -167,20 +167,30 @@ class Searcher
             }
         }
 
+        // this works at an OR level, not an AND one :(
+       // $query->where('flickrtagid', 'IN', [39]);
+
 
         // add the tokens as facets
         foreach($this->facettedTokens as $tokenToFacet) {
             $facet = (new Facet($connection))->facet(array($tokenToFacet));
             $facet->orderBy("count(*)", "desc");
-            //$facet->limit(1000);
+
+            // @todo Make configurable
+            $facet->limit(1000);
             //$facet->orderBy('iso', 'desc');
             $query->facet($facet);
         }
 
+        $hasManyTokens = $this->hasManyTokens;
+
+
         // add MVA as facets - note these will come back with numerical IDs only, cannot be sorted, and need PHP massage
-        foreach($this->hasManyTokens as $tokenToFacet) {
+        foreach($hasManyTokens as $tokenToFacet) {
             $this->getClassNameForMVATitle($tokenToFacet);
-            $facet = (new Facet($connection))->facet(array($tokenToFacet));
+            $facet = (new Facet($connection))->facet([$tokenToFacet]);
+
+            // @todo Make configurable
             $facet->limit(1000);
             $query->facet($facet);
         }
@@ -223,6 +233,32 @@ class Searcher
                     $nextFacet = ['Value' => $value, 'Count' => $count, 'Name' => $token, 'ExtraParam' => "$token=$value"];
                     $filterForFacet = $this->filters;
 
+
+
+
+                    if (in_array($token, $hasManyTokens)) {
+                        echo '*** MVA ****';
+                        echo $token;
+                        $name = $nextFacet['Name'];
+
+                        echo "Checking for {$name} in ";
+                        print_r($filterForFacet);
+
+                        // flickrtagid=>28 for example
+                        // name is likes of flickrtagid
+
+                        if (isset($filterForFacet[$name])) {
+                            echo '**** MATCH ****?';
+                            // a break is needed here for the correct condition
+                            echo "VALUE: " . $value . ', ' . $filterForFacet[$name] . "\n";
+                            if ($value != $filterForFacet[$name]) {
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+
                     if (isset($this->filters[$token])) {
                         $nextFacet['Selected'] = true;
                         unset($filterForFacet[$token]);
@@ -239,7 +275,7 @@ class Searcher
                        // }
                     }
 
-                    $nextFacet['Params'] = substr($urlParams, 0, -1);
+                    $nextFacet['Params'] = substr($urlParams, 0, -1) ;
 
                     $tokenFacets[] = $nextFacet;
                 }
