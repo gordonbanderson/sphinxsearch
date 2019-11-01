@@ -232,7 +232,7 @@ class Searcher
                     // do this way to maintain order from Sphinx
                     $nextFacet = ['Value' => $value, 'Count' => $count, 'Name' => $token, 'ExtraParam' => "$token=$value"];
                     $filterForFacet = $this->filters;
-
+                    $filterKeys = array_keys($filterForFacet);
 
 
 
@@ -247,7 +247,7 @@ class Searcher
                         // flickrtagid=>28 for example
                         // name is likes of flickrtagid
 
-                        if (!empty($filterForFacet) && isset($filterForFacet[$name])) {
+                        if (in_array($name, $filterKeys) && isset($filterForFacet[$name])) {
                             echo '**** MATCH ****?';
                             // a break is needed here for the correct condition
                             echo "VALUE: " . $value . ', ' . $filterForFacet[$name] . "\n";
@@ -256,9 +256,9 @@ class Searcher
                                 // We only wish to show the selected ones
                                 continue;
                             }
-                        } else if (!empty($filterForFacet)) {
-                            continue;
-                        }
+
+                            // this is the problematic condition
+                        } 
                     }
 
                     if (isset($this->filters[$token])) {
