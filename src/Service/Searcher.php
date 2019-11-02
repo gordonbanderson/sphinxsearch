@@ -207,7 +207,6 @@ class Searcher
         $result = $query->executeBatch()
             ->getStored();
 
-        //echo "<pre>". print_r($result,1) . "</pre>";
 
         /** @var ResultSet $resultSet */
         $resultSet = $result[0];
@@ -234,31 +233,17 @@ class Searcher
                     $filterForFacet = $this->filters;
                     $filterKeys = array_keys($filterForFacet);
 
-
-
                     if (in_array($token, $hasManyTokens)) {
-                        echo '*** MVA ****';
-                        echo $token;
                         $name = $nextFacet['Name'];
 
-                        echo "Checking for {$name} in ";
-                        print_r($filterForFacet);
-
-                        // flickrtagid=>28 for example
-                        // name is likes of flickrtagid
-
                         if (in_array($name, $filterKeys) && isset($filterForFacet[$name])) {
-                            echo '**** MATCH ****?';
                             // a break is needed here for the correct condition
-                            echo "VALUE: " . $value . ', ' . $filterForFacet[$name] . "\n";
                             if ($value != $filterForFacet[$name]) {
                                 // if the values do not match, i.e. the MVA id does not match, skip rendering
                                 // We only wish to show the selected ones
                                 continue;
                             }
-
-                            // this is the problematic condition
-                        } 
+                        }
                     }
 
                     if (isset($this->filters[$token])) {
