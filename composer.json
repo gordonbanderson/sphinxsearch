@@ -1,6 +1,6 @@
 {
     "name": "suilven/sphinxsearch",
-    "type": "library",
+    "type": "silverstripe-vendormodule",
     "description": "Search SilverStripe using Sphinx",
     "keywords": [
         "suilven",
