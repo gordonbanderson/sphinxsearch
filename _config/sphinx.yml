@@ -13,7 +13,7 @@ Suilven\SphinxSearch\Service\Client:
 
   #This must be writable
   #Debian path
-  config_file: '/etc/sphinxsearch/sphinx.conf'
+  config_file: '/etc/manticoresearch/manticore.conf'
 
   #The command to reindex, if empty use inotify to trigger instead
   cmd_reindex: '/usr/bin/indexer --verbose --rotate --all'
