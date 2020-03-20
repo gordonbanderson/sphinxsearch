@@ -1,15 +1,14 @@
 inherit: true
 
+# See https://github.com/scrutinizer-ci/scrutinizer/issues/399
+checks:
+  php: true
+
 build:
   nodes:
     analysis:
       tests:
         override: [php-scrutinizer-run]
 
-checks:
-  php:
-    code_rating: true
-    duplication: true
-
 filter:
-  paths: [src/*, tests/*]
+  paths: ["src/*", "tests/*"]
