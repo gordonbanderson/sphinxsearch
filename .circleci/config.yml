@@ -38,6 +38,9 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
+      - run: cd /tmp && git clone https://github.com/manticoresoftware/manticore.git && apt-get install build-essential cmake unixodbc-dev libpq-dev libexpat-dev libmysqlclient-dev libicu-dev libssl-dev libboost-system-dev libboost-program-options-dev git flex bison
+      - run: mkdir build && cd build && cmake3 -D WITH_MYSQL=1 WITH_PGSQL=1 -DWITH_RE2=1 ../manticore
+      - run: cd -
       - run: composer validate
       - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
       - run: composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
