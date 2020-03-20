@@ -1,11 +1,28 @@
-# sphinxsearch
+# Sphinx Search
+[![Build Status](https://travis-ci.org/gordonbanderson/sphinxsearch.svg?branch=testing)](https://travis-ci.org/gordonbanderson/sphinxsearch)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/gordonbanderson/sphinxsearch/badges/quality-score.png?b=testing)](https://scrutinizer-ci.com/g/gordonbanderson/sphinxsearch/?branch=testing)
+[![Build Status](https://scrutinizer-ci.com/g/gordonbanderson/sphinxsearch/badges/build.png?b=testing)](https://scrutinizer-ci.com/g/gordonbanderson/sphinxsearch/build-status/testing)
+[![CircleCI](https://circleci.com/gh/gordonbanderson/sphinxsearch.svg?style=svg)](https://circleci.com/gh/gordonbanderson/sphinxsearch)
 
-[![Latest Version on Packagist][ico-version]][link-packagist]
-[![Software License][ico-license]](LICENSE.md)
-[![Build Status][ico-travis]][link-travis]
-[![Coverage Status][ico-scrutinizer]][link-scrutinizer]
-[![Quality Score][ico-code-quality]][link-code-quality]
-[![Total Downloads][ico-downloads]][link-downloads]
+[![codecov.io](https://codecov.io/github/gordonbanderson/sphinxsearch/coverage.svg?branch=testing)](https://codecov.io/github/gordonbanderson/sphinxsearch?branch=testing)
+
+
+[![Latest Stable Version](https://poser.pugx.org/suilven/sphinxsearch/version)](https://packagist.org/packages/suilven/sphinxsearch)
+[![Latest Unstable Version](https://poser.pugx.org/suilven/sphinxsearch/v/unstable)](//packagist.org/packages/suilven/sphinxsearch)
+[![Total Downloads](https://poser.pugx.org/suilven/sphinxsearch/downloads)](https://packagist.org/packages/suilven/sphinxsearch)
+[![License](https://poser.pugx.org/suilven/sphinxsearch/license)](https://packagist.org/packages/suilven/sphinxsearch)
+[![Monthly Downloads](https://poser.pugx.org/suilven/sphinxsearch/d/monthly)](https://packagist.org/packages/suilven/sphinxsearch)
+[![Daily Downloads](https://poser.pugx.org/suilven/sphinxsearch/d/daily)](https://packagist.org/packages/suilven/sphinxsearch)
+[![composer.lock](https://poser.pugx.org/suilven/sphinxsearch/composerlock)](https://packagist.org/packages/suilven/sphinxsearch)
+
+[![GitHub Code Size](https://img.shields.io/github/languages/code-size/gordonbanderson/sphinxsearch)](https://github.com/gordonbanderson/sphinxsearch)
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/gordonbanderson/sphinxsearch)](https://github.com/gordonbanderson/sphinxsearch)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/gordonbanderson/sphinxsearch)](https://github.com/gordonbanderson/sphinxsearch)
+[![GitHub Activity](https://img.shields.io/github/commit-activity/m/gordonbanderson/sphinxsearch)](https://github.com/gordonbanderson/sphinxsearch)
+[![GitHub Issues](https://img.shields.io/github/issues/gordonbanderson/sphinxsearch)](https://github.com/gordonbanderson/sphinxsearch/issues)
+
+![codecov.io](https://codecov.io/github/gordonbanderson/sphinxsearch/branch.svg?branch=testing)
+
 
 **Note:** Replace ```Gordon Anderson``` ```gordonbanderson``` ```https://github.com/gordonbanderson``` ```gordon.b.anderson@gmail.com``` ```suilven``` ```sphinxsearch``` ```Search SilverStripe using Sphinx``` with their correct values in [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [CONTRIBUTING.md](CONTRIBUTING.md), [LICENSE.md](LICENSE.md) and [composer.json](composer.json) files, then delete this line. You can run `$ php prefill.php` in the command line to make all replacements at once. Delete the file prefill.php as well.
 
@@ -75,9 +92,6 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [ico-downloads]: https://img.shields.io/packagist/dt/suilven/sphinxsearch.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/suilven/sphinxsearch
-[link-travis]: https://travis-ci.org/suilven/sphinxsearch
-[link-scrutinizer]: https://scrutinizer-ci.com/g/suilven/sphinxsearch/code-structure
-[link-code-quality]: https://scrutinizer-ci.com/g/suilven/sphinxsearch
 [link-downloads]: https://packagist.org/packages/suilven/sphinxsearch
 [link-author]: https://github.com/gordonbanderson
 [link-contributors]: ../../contributors
