@@ -22,8 +22,10 @@ jobs:
       - run: sudo killall -9 apt-get || true
       - run: sudo killall -9 apt || true
       - run: sudo dpkg -l | grep desktop
+      = run: sudo apt-add-repository -y ppa:ondrej/php
       - run: sudo apt-get -y remove google-chrome-beta/stable google-chrome-stable/stable google-chrome-unstable/stable
       - run: sudo apt-get -y update
+      - run: sudo apt-get -y search php
       - run: sudo apt-get -y upgrade
       - run: sudo apt-get install wget mariadb mariadb-client ca-certificates curl \
           libapache2-mod-php7.3/stable php-cli php-intl php-mb3 php-gd
