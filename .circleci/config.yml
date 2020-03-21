@@ -20,6 +20,7 @@ jobs:
 
 
       - run: sudo apt search chrome | grep chrome
+      - run: sudo apt remove ubuntu-desktop
       - run: sudo apt -y update
       - run: sudo apt -y upgrade
       - run: sudo apt install wget mariadb mariadb-client ca-certificates curl \
