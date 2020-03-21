@@ -8,6 +8,10 @@ services:
 cache:
   directories:
     - $HOME/.composer/cache/files
+addons:
+  - postgresql: 12
+  - apt:
+    - packages:
 
 env:
   global:
