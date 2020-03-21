@@ -5,22 +5,7 @@
 version: 2
 jobs:
   build:
-    docker:
-      - image: brettt89/silverstripe-web:7.1-platform
-        environment:
-          - SS_DATABASE_CLASS=MySQLPDODatabase
-          - SS_DATABASE_SERVER=127.0.0.1
-          - SS_DATABASE_USERNAME=root
-          - SS_DATABASE_PASSWORD=ubuntu
-          - SS_DATABASE_NAME=circle_test
-          - SS_ENVIRONMENT_TYPE=dev
-      - image: circleci/mysql:5.7
-        environment:
-          - MYSQL_USER=root
-          - MYSQL_ROOT_PASSWORD=ubuntu
-          - MYSQL_DATABASE=circle_test
-          - MYSQL_HOST=127.0.0.1
-
+    machine: ubuntu-1804:latest
     working_directory: ~/var/www
 
     branches:
@@ -38,14 +23,11 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
-      - run: cd /tmp && git clone https://github.com/manticoresoftware/manticore.git && apt-get install build-essential cmake unixodbc-dev libpq-dev libexpat-dev libmysqlclient-dev libicu-dev libssl-dev libboost-system-dev libboost-program-options-dev git flex bison
-      - run: mkdir build && cd build && cmake3 -D WITH_MYSQL=1 WITH_PGSQL=1 -DWITH_RE2=1 ../manticore
-      - run: cd -
+      - run: apt -y update && apt -y upgrade && apt install wget mariadb mariadb-client ca-certificates curl libapache2-mod-php7.3/stable php-cli php-intl php-mb3
+      - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
       - run: composer validate
       - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
       - run: composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
-      - run: composer require --prefer-source --no-interaction silverstripe/widgets
-
 
 
       - save_cache:
