@@ -20,7 +20,8 @@ jobs:
 
       #See https://discuss.circleci.com/t/could-not-get-lock-var-lib-apt-lists-lock/28337
       - run: sudo killall -9 apt-get || true
-      - run: sudo apt-cache search desktop | grep ubuntu
+      - run: sudo killall -9 apt || true
+      - run: sudo dpkg -l | grep desktop
       - run: sudo apt-get -y remove google-chrome-beta/stable google-chrome-stable/stable google-chrome-unstable/stable
       - run: sudo apt-get -y update
       - run: sudo apt-get -y upgrade
