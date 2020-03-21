@@ -9,12 +9,6 @@ cache:
   directories:
     - $HOME/.composer/cache/files
 
-addons:
-  postgresql: 9.6
-  apt:
-    packages:
-      - postgresql-9.6-postgis-2.3
-      - libssl1.1
 env:
   global:
     - COMPOSER_ROOT_VERSION=4.x-dev
@@ -35,6 +29,8 @@ matrix:
 #      env: DB=MYSQL RECIPE_VERSION=4.x-dev PHPCS_TEST=1
 
 before_script:
+  - sudo apt update && sudo apt -y upgrade
+  - sudo apt-get -y install postgresql postgresql-client wget 
   - psql -c 'create database travis_ci_test;' -U postgres
   # Init PHP
   - phpenv rehash
