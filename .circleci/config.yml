@@ -17,10 +17,7 @@ jobs:
     steps:
       - run: whoami
       - run: git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing
-
-
-      - run: sudo apt search chrome | grep chrome
-      - run: sudo apt remove ubuntu-desktop
+      - run: sudo apt remove google-chrome-beta/stable google-chrome-stable/stable google-chrome-unstable/stable
       - run: sudo apt -y update
       - run: sudo apt -y upgrade
       - run: sudo apt install wget mariadb mariadb-client ca-certificates curl \
