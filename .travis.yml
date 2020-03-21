@@ -37,7 +37,8 @@ before_script:
   - sudo find /etc/apt
   - sudo apt-get update
   - sudo apt install postgresql postgresql-client wget
-  - sudo /usr/lib/postgresql/12/bin/pg_ctl -D /var/lib/postgresql/12/main -l logfile start
+  #- sudo su -postgres /usr/lib/postgresql/12/bin/pg_ctl -D /var/lib/postgresql/12/main -l logfile start
+  - sudo service postgresql start
   - psql -c 'create database travis_ci_test;' -U postgres
   # Init PHP
   - phpenv rehash
