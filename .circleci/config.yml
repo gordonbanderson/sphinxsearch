@@ -15,7 +15,7 @@ jobs:
         - testing
 
     steps:
-      - checkout
+      - run: git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing
 
       # Download and cache dependencies
       - restore_cache:
