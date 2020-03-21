@@ -39,7 +39,7 @@ before_script:
   - phpenv rehash
   - phpenv config-rm xdebug.ini
   - echo 'memory_limit = 2G' >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
-  - wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
+  - wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  sudo dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
 
 
 
