@@ -31,9 +31,6 @@ matrix:
 before_script:
   - sudo apt-get -y remove postgresql postgresql-client
   - sudo find /etc/apt
-  - sudo ls -lh /etc/apt/sources.list.d && sudo cat /etc/apt/sources.list.d/pgdg.list && sudo rm /etc/apt/sources.list.d/pgdg.list
-  - sudo echo 'deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main' >> /etc/apt/sources.list.d/pgdg.list
-  - wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
   - sudo apt-get update
   - sudo apt install postgresql postgresql-client wget
   - psql -c 'create database travis_ci_test;' -U postgres
