@@ -18,6 +18,10 @@ jobs:
       - run: whoami
       - run: git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing
 
+
+      - run: sudo apt -y update && apt -y upgrade && apt install wget mariadb mariadb-client ca-certificates curl \
+          libapache2-mod-php7.3/stable php-cli php-intl php-mb3 php-gd
+      - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -25,8 +29,6 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
-      - run: sudo apt -y update && apt -y upgrade && apt install wget mariadb mariadb-client ca-certificates curl libapache2-mod-php7.3/stable php-cli php-intl php-mb3 php-gd
-      - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
       - run: composer validate
       - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
       - run: composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
