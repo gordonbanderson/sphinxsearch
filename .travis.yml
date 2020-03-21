@@ -53,7 +53,7 @@ before_script:
 
   # Install composer dependencies
   - composer validate # --strict here?
-  - composer require silverstripe/recipe-cms:"$RECIPE_VERSION" silverstripe/recipe-testing:"$RECIPE_VERSION" --no-update
+  - composer require silverstripe/recipe-cms:"$RECIPE_VERSION" --no-update
   - if [[ $BEHAT_TEST ]]; then composer require --no-update silverstripe/behat-extension:4.x-dev; fi;
   - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:^2 --no-update; fi
   - composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
