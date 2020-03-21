@@ -5,7 +5,8 @@
 version: 2
 jobs:
   build:
-    machine: ubuntu-1604:201903-01
+    machine:
+      image: circleci/classic:201808-01
     working_directory: ~/var/www
 
     branches:
