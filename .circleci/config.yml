@@ -26,9 +26,9 @@ jobs:
       - run: sudo apt-get -y remove google-chrome-beta/stable google-chrome-stable/stable google-chrome-unstable/stable
       - run: sudo apt-get -y update
       - run: sudo apt-cache  search php
-      - run: sudo apt-get -y upgrade
-      - run: sudo apt-get install wget mariadb mariadb-client ca-certificates curl \
-          php-cli php-intl php-mb3 php-gd
+      #- run: sudo apt-get -y upgrade
+      - run: sudo apt-get install wget mysql mysql-client ca-certificates curl \
+          php7.4 php7.4-cli php7.4-intl php7.4-mb3 php7.4-gd
       - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
       # Download and cache dependencies
       - restore_cache:
