@@ -52,6 +52,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-ci-dependencies-
 
+      - run: ls -lh
       - run: composer validate
       - run: composer self update
       - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
