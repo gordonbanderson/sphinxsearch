@@ -42,7 +42,7 @@ jobs:
       - run: sudo mv composer.phar /usr/bin/composer
 
       - run: echo $PATH && ls -lh /var/www
-      - run: cd /tmp && git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing && find sphinxseearch && ls -la sphinxsearch && sudo rm -rf /var/www && sudo mv -v sphinxsearch.git /var/www
+      - run: cd /tmp && git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing && find . && pwd && ls -la sphinxsearch && sudo rm -rf /var/www && sudo mv -v sphinxsearch.git /var/www
       - run: pwd
 
 
