@@ -16,7 +16,6 @@ jobs:
 
     steps:
       - run: whoami
-      - run: git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing
 
       #See https://discuss.circleci.com/t/could-not-get-lock-var-lib-apt-lists-lock/28337
       - run: sudo killall -9 apt-get || true
@@ -43,7 +42,9 @@ jobs:
       - run: sudo mv composer.phar /usr/bin/composer
 
       - run: echo $PATH
-      - run: cd sphinxsearch/
+      - run: cd /tmp && git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing && rm -rf /var/www && mv sphinxsearch.git /var/www
+      - run: pwd
+
 
       # Download and cache dependencies
       - restore_cache:
@@ -52,7 +53,7 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-ci-dependencies-
 
-      - run: ls -lh
+      - run: ls -lh && ls -lh /var/www
       - run: composer validate
       - run: composer self update
       - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
