@@ -29,7 +29,7 @@ jobs:
       - run: sudo apt-cache  search mysql
       #- run: sudo apt-get -y upgrade
       - run: sudo apt-get install wget php7.4
-      - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  dpkg -i manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
+      - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb &&  sudo dpkg -i ./manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb && rm manticore_3.3.0-200204-01fc8ad1-release.buster_amd64-bin.deb
       # Download and cache dependencies
       - restore_cache:
           keys:
