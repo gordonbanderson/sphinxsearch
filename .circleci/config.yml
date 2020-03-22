@@ -43,9 +43,9 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-ci-dependencies-
 
-      - run: composer validate
-      - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
-      - run: composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
+      - run: ./composer validate
+      - run: ./composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
+      - run: ./composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
 
       - save_cache:
