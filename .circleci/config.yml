@@ -28,10 +28,10 @@ jobs:
       - run: sudo apt-cache  search php
       - run: sudo apt-cache  search mysql
       #- run: sudo apt-get -y upgrade
-      - run: sudo debconf-set-selections <<< "mysql-server-5.5 mysql-server/root_password password ''"
-      - run: sudo debconf-set-selections <<< "mysql-server-5.5 mysql-server/root_password_again password ''"
-      - run: sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password ''"
-      - run: sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password ''"
+      - run: sudo debconf-set-selections <<< "mysql-server-5.5 mysql-server/root_password password 'wibble'"
+      - run: sudo debconf-set-selections <<< "mysql-server-5.5 mysql-server/root_password_again password 'wibble'"
+      - run: sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password 'wibble'"
+      - run: sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password 'wibble'"
       - run: export DEBIAN_FRONTEND=noninteractive
       - run: sudo apt-get -y install wget php7.4 php7.4-gd php7.4-intl php7.4-mbstring php7.4-mysql php7.4-tidy php7.4-zip php7.4-curl php7.4-phpdbg php7.4-xml mysql-server mysql-client
       - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad-release.xenial_amd64-bin.deb && sudo dpkg -i ./manticore_3.3.0-200204-01fc8ad-release.xenial_amd64-bin.deb
@@ -50,10 +50,11 @@ jobs:
       - run: echo 'SS_BASE_URL="http://localhost"' > .env
       - run: echo 'SS_DATABASE_CLASS="MySQLPDODatabase"' >> .env
       - run: echo 'SS_DATABASE_NAME="unittesting"' >> .env
-      - run: echo 'SS_DATABASE_PASSWORD=""' >> .env
+      - run: echo 'SS_DATABASE_PASSWORD="wibble"' >> .env
       - run: echo 'SS_DATABASE_SERVER="localhost"' >> .env
-      - run: echo 'SS_DATABASE_USERNAME="mysql"' >> .env
-      - run: echo 'SS_ENVIRONMENT_TYPE="test"' >> .env
+      - run: echo 'SS_DATABASE_USERNAME="root"' >> .env
+      - run: echo 'SS_ENVIRONMENT_TYPE="test" >> .env
+      - run: less .env
 
 
 
