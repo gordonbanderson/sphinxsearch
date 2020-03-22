@@ -46,6 +46,16 @@ jobs:
       - run: cd /tmp && git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing && find . && echo 'DIRRRRR' && pwd && ls -la sphinxsearch && sudo mv -v sphinxsearch/* /home/circleci/var/www
       - run: pwd
 
+      # Setup .env file
+      - run: echo 'SS_BASE_URL="http://localhost"' > .env
+      - run: echo 'SS_DATABASE_CLASS="MySQLPDODatabase"' >> .env
+      - run: echo 'SS_DATABASE_NAME="unittesting" >> .env
+      - run: echo 'SS_DATABASE_PASSWORD="" >> .env
+      - run: echo 'SS_DATABASE_SERVER="localhost" >> .env
+      - run: echo 'SS_DATABASE_USERNAME="mysql" >> .env
+      - run: echo 'SS_ENVIRONMENT_TYPE="test" >> .env
+
+
 
       # Download and cache dependencies
       - restore_cache:
