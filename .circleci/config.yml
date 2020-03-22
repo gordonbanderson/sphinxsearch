@@ -28,8 +28,9 @@ jobs:
       - run: sudo apt-cache  search php
       - run: sudo apt-cache  search mysql
       #- run: sudo apt-get -y upgrade
-      - run: sudo apt-get install wget php7.4 mysql-server mysql-client
+      - run: sudo apt-get -y install wget php7.4 mysql-server mysql-client
       - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad-release.xenial_amd64-bin.deb && sudo dpkg -i ./manticore_3.3.0-200204-01fc8ad-release.xenial_amd64-bin.deb
+      - run: sudo apt autoremove
       - run: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
       - run: php -r "if (hash_file('sha384', 'composer-setup.php') === 'e0012edf3e80b6978849f5eff0d4b4e4c79ff1609dd1e613307e16318854d24ae64f26d17af3ef0bf7cfb710ca74755a') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
       - run: php composer-setup.php
