@@ -56,7 +56,7 @@ jobs:
 
       - run: ls -lh && ls -lh /var/www
       - run: composer validate
-      - run: composer self update
+      - run: composer self-update
       - run: composer require --prefer-source --no-update silverstripe/recipe-cms:4.x-dev
       - run: composer install --prefer-source --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
 
