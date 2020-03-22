@@ -41,8 +41,8 @@ jobs:
       - run: php -r "unlink('composer-setup.php');"
       - run: sudo mv composer.phar /usr/bin/composer
 
-      - run: echo $PATH
-      - run: cd /tmp && git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing && rm -rf /var/www && mv sphinxsearch.git /var/www
+      - run: echo $PATH && ls -lh /var/www
+      - run: cd /tmp && git clone https://github.com/gordonbanderson/sphinxsearch.git -b testing && sudo rm -rf /var/www && mv sphinxsearch.git /var/www
       - run: pwd
 
 
