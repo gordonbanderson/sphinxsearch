@@ -28,6 +28,11 @@ jobs:
       - run: sudo apt-cache  search php
       - run: sudo apt-cache  search mysql
       #- run: sudo apt-get -y upgrade
+      - run: sudo debconf-set-selections <<< "mysql-server-5.5 mysql-server/root_password password ''"
+      - run: sudo debconf-set-selections <<< "mysql-server-5.5 mysql-server/root_password_again password ''"
+      - run: sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password ''"
+      - run: sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password ''"
+      - run: export DEBIAN_FRONTEND=noninteractive
       - run: sudo apt-get -y install wget php7.4 mysql-server mysql-client
       - run: wget https://github.com/manticoresoftware/manticoresearch/releases/download/3.3.0/manticore_3.3.0-200204-01fc8ad-release.xenial_amd64-bin.deb && sudo dpkg -i ./manticore_3.3.0-200204-01fc8ad-release.xenial_amd64-bin.deb
       - run: sudo apt autoremove
