@@ -53,7 +53,7 @@ jobs:
       - run: echo 'SS_DATABASE_PASSWORD="wibble"' >> .env
       - run: echo 'SS_DATABASE_SERVER="localhost"' >> .env
       - run: echo 'SS_DATABASE_USERNAME="root"' >> .env
-      - run: echo 'SS_ENVIRONMENT_TYPE="test" >> .env
+      - run: echo 'SS_ENVIRONMENT_TYPE="test"' >> .env
       - run: less .env
 
 
