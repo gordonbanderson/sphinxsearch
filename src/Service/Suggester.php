@@ -6,22 +6,15 @@
  * Time: 1:35 น.
  */
 
-namespace Suilven\SphinxSearch\Service;
+namespace Suilven\ManticoreSearch\Service;
 
 
-use Foolz\SphinxQL\Drivers\Pdo\ResultSet;
-use Foolz\SphinxQL\Facet;
-use Foolz\SphinxQL\Helper;
-use Foolz\SphinxQL\SphinxQL;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\PaginatedList;
-use SilverStripe\View\ArrayData;
-use Suilven\FreeTextSearch\Indexes;
 
 class Suggester
 {
-
+    /**
+     * @var Client
+     */
     private $client;
 
     private $index = 'sitetree';
@@ -40,8 +33,27 @@ class Suggester
         $this->client = new Client();
     }
 
+    public function suggest($q, $limit = 5)
+    {
+        $params = [
+            'index' => $this->index,
+            'body' => [
+                'query'=>$q,
+                'options' => [
+                    'limit' => $limit
+                ]
+            ]
+        ];
 
-    public function suggest($q)
+        error_log('SUGGEST QUERY: ' . print_r($params, 1));
+
+        $response = $this->client->getConnection()->suggest($params);
+
+        return $response;
+    }
+
+
+    public function oldsuggest($q)
     {
         $suggestions = [];
 

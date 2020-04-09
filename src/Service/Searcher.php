@@ -6,7 +6,7 @@
  * Time: 1:35 น.
  */
 
-namespace Suilven\SphinxSearch\Service;
+namespace Suilven\ManticoreSearch\Service;
 
 
 use Foolz\SphinxQL\Drivers\Pdo\ResultSet;
@@ -88,7 +88,24 @@ class Searcher
     }
 
 
-    public function search($q)
+    public function search($q) {
+        $search = [
+            'body' => [
+                'index' => $this->index,
+                'query' => [
+                    'match' => ['*' => $q],
+                ],
+            ]
+        ];
+
+        $client = new Client();
+        $connection = $client->getConnection();
+        $result = $connection->search($search);
+        return $result;
+    }
+
+
+    public function oldSearch($q)
     {
         $startMs = round(microtime(true) * 1000);
         $connection = $this->client->getConnection();

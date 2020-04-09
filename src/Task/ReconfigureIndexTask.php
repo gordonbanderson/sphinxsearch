@@ -6,12 +6,12 @@
  * Time: 16:22 น.
  */
 
-namespace Suilven\SphinxSearch\Task;
+namespace Suilven\ManticoreSearch\Task;
 
 
 use SilverStripe\Dev\BuildTask;
 use Suilven\FreeTextSearch\Indexes;
-use Suilven\SphinxSearch\Service\Indexer;
+use Suilven\ManticoreSearch\Service\Indexer;
 
 class ReconfigureIndexTask extends BuildTask
 {
@@ -30,6 +30,6 @@ class ReconfigureIndexTask extends BuildTask
         $indexesService = new Indexes();
         $indexesObj = $indexesService->getIndexes();
         $indexer = new Indexer($indexesObj);
-        $indexer->saveConfig();
+        $indexer->reconfigureIndexes();
     }
 }

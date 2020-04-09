@@ -6,21 +6,20 @@
  * Time: 21:14 น.
  */
 
-namespace Suilven\SphinxSearch\Service;
+namespace Suilven\ManticoreSearch\Service;
 
 
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Environment;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
-use SilverStripe\ORM\DataQuery;
 use SilverStripe\Versioned\Versioned;
 use SilverStripe\View\ArrayData;
 use Suilven\FreeTextSearch\Index;
 use Suilven\FreeTextSearch\Indexes;
+use Suilven\ManticoreSearch\Helper\ReconfigureIndexesHelper;
 
 class Indexer
 {
@@ -65,6 +64,12 @@ class Indexer
      */
     public function generateConfig()
     {
+
+
+
+
+
+
         $allConfigs = [];
 
 
@@ -75,6 +80,7 @@ class Indexer
 
 
             $name = $index->getName();
+            error_log("\n\n\n\nNAME: " . $name);
             $fields = []; // ['ID', 'CreatedAt', 'LastEdited'];
 
 
@@ -97,6 +103,8 @@ class Indexer
             /** @var DataList $query */
             $singleton = singleton($className);
             $tableName = $singleton->config()->get('table_name');
+
+            error_log('TABLE NAME: ' . $tableName);
             $schema = $singleton->getSchema();
 
             $specs = $schema->fieldSpecs($className, DataObjectSchema::DB_ONLY);
@@ -113,6 +121,8 @@ class Indexer
 
             // this is how to do it with a DataList, it clones and returns a new DataList
             $queryObject = $queryObject->setQueriedColumns($fields);
+
+           // error_log('FIELDS: ' . print_r($fields, 1));
 
 
             // this needs massages for sphinx
@@ -166,11 +176,17 @@ class Indexer
             $allFields[] = 'LastEdited';
             $allFields[] = 'Created';
 
+            error_log("\n\nFIELDS: SPECS=");
+          //  error_log(print_r($specs, 1));
+
             // make modifications to query and or attributes but only if required
             foreach($allFields as $field)
             {
+                error_log('Checking field ' . $field);
                 if (isset($specs[$field])) {
                     $fieldType = $specs[$field];
+                    error_log('  - specs set - field type is '. $fieldType);
+
                     switch($fieldType) {
                         case 'DBDatetime':
                             $sql = str_replace("`$tableName`.`$field`", "UNIX_TIMESTAMP(`$tableName`.`$field`) AS `$field`" , $sql);
@@ -196,6 +212,8 @@ class Indexer
                     // strings and ints may need tokenized, others as above.  See http://sphinxsearch.com/wiki/doku.php?id=fields_and_attributes
                     if (in_array($field, $tokens)) {
                         $fieldType = $specs[$field];
+
+                        error_log('FIELD ' . $field . ' IS IN TOKENS, WITH TYPE ' . $fieldType);
 
                         // remove string length from varchar
                         if (substr( $fieldType, 0, 7 ) === "Varchar") {
@@ -224,7 +242,7 @@ class Indexer
                         }
                     }
                 } else {
-                    user_error("The field {$field} does not exist for class {$className}");
+                    user_error("T10 The field {$field} does not exist for class {$className}");
                 }
 
                 //
@@ -259,6 +277,12 @@ class Indexer
         return $allConfigs;
     }
 
+    public function reconfigureIndexes()
+    {
+        $helper = new ReconfigureIndexesHelper();
+        $helper->reconfigureIndexes($this->indexes);
+    }
+
     /**
      * Create a valid sphinx.conf file and save it.  Note that the commandline or web server user must have write
      * access to the path defined in _config.
@@ -276,7 +300,7 @@ class Indexer
 
         // specific to silverstripe data
         $sphinxConfigurations = $this->generateConfig();
-        $sphinxSavePath = Config::inst()->get('Suilven\SphinxSearch\Service\Client', 'config_file');
+        $sphinxSavePath = Config::inst()->get(Client::class, 'config_file');
 
         $config = $common . $indexer . $searchd;
 
